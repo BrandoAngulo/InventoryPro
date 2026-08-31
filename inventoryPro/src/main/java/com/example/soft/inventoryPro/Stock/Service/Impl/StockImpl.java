@@ -69,7 +69,11 @@ public class StockImpl implements StockService {
     @Override
     public Stock finByIdStock(Integer idStock) {
         try{
-            return stockRepository.findById(idStock).orElseThrow();
+            return stockRepository.findById(idStock)  .orElseThrow(() -> new ResponseStatusException(
+                    HttpStatus.NOT_FOUND,
+                    "El stock no encontrado con ID: " + idStock
+            ));
+
         }catch (Exception e){
             throw new RuntimeException(e);
         }
@@ -80,6 +84,15 @@ public class StockImpl implements StockService {
         List<Stock> stockList = stockRepository.findAll();
 
         try{
+
+            if (stockList.isEmpty()){
+                throw new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "La lista esta vacia"
+                );
+            }
+
+
             return stockList;
         }catch (Exception e) {
             throw new RuntimeException(e);

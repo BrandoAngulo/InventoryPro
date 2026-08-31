@@ -2,6 +2,7 @@ package com.example.soft.inventoryPro.Productos.Models;
 
 import com.example.soft.inventoryPro.Bodega.Models.Bodega;
 import com.example.soft.inventoryPro.Categoria.Models.Categoria;
+import com.example.soft.inventoryPro.Proovedor.Models.Proovedor;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -54,5 +55,14 @@ public class Productos {
 
     )
     Set<Bodega> Bodega = new HashSet<>();
+
+    @ManyToMany
+    @JoinTable(
+            name = "producto_proveedor",
+            joinColumns = @JoinColumn(name = "producto_id"),
+            inverseJoinColumns = @JoinColumn(name = "proveedor_id")
+    )
+    private Set<Proovedor> proveedores;
+
      }
 

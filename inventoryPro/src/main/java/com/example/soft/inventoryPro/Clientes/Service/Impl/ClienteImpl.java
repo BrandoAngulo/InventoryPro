@@ -22,11 +22,16 @@ public class ClienteImpl implements ClienteService {
     @Override
     public Cliente registrarCliente(Cliente cliente) {
         Usuario usuario = usuarioRepository.findById(cliente.getUsuario().getIdUsuario()).orElseThrow(
-                (() -> new RuntimeException("Usuario no encontrado con ID: " + cliente.getUsuario().getIdUsuario())));
+                (() -> new ResponseStatusException( HttpStatus.NOT_FOUND,"Usuario no encontrado con ID: " + cliente.getUsuario().getIdUsuario())));
+
+
+
+
+
 
         clienteRepository.findClienteByDocumento(cliente.getDocumento()).ifPresent(c -> {
             throw new ResponseStatusException(
-                    HttpStatus.CONFLICT,
+                    HttpStatus.NOT_FOUND,
                     "El cliente ya existe"
             );
         });

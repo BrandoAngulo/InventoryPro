@@ -53,7 +53,11 @@ public class CategoriasImpl implements CategoriaService {
     @Override
     public Categoria findByIdCategoria(Integer id) {
         try{
-            return categoriaRepository.findById(id).orElseThrow();
+            return categoriaRepository.findById(id)  .orElseThrow(() -> new ResponseStatusException(
+                    HttpStatus.NOT_FOUND,
+                    "Categoria no encontrado con ID: " + id
+            ));
+
         }catch (Exception e){
             throw new RuntimeException(e);
         }

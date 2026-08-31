@@ -39,7 +39,8 @@ public class ProductosImpl implements ProductoService {
                         "Producto no encontrado con ID: " + productos.getIdProductos()
                 )); */
         Set<Categoria> categoriasList = productos.getCategorias().stream()
-                .map(modulo -> categoriaRepository.findById(modulo.getIdCategoria()).orElseThrow(() -> new ResponseStatusException(
+                .map(modulo -> categoriaRepository.findById(modulo.getIdCategoria()).orElseThrow(() ->
+                        new ResponseStatusException(
                                 HttpStatus.NOT_FOUND,
                                 "Categoría no encontrada con ID: " + modulo.getIdCategoria()
                         ))
@@ -109,7 +110,10 @@ public class ProductosImpl implements ProductoService {
     @Override
     public Productos findByIdProductos(Integer id) {
         try {
-            Productos productos = productoRepository.findById(id).orElseThrow();
+            Productos productos = productoRepository.findById(id) .orElseThrow(() -> new ResponseStatusException(
+                    HttpStatus.NOT_FOUND,
+                    "Producto no encontrado con ID: " + id
+            ));
 
             return productos;
 
@@ -125,7 +129,8 @@ public class ProductosImpl implements ProductoService {
             List<ProductoResponse> Product = productoRepository.findAllByProductos();
             if (Product.isEmpty()) {
 
-                throw new RuntimeException("La lista esta vacia");
+                throw new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,"La lista esta vacia");
             }
             return Product;
         }catch  (Exception e){
