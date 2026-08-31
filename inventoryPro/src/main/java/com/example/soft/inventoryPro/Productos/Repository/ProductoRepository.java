@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface ProductoRepository extends JpaRepository<Productos, Integer> {
     @Query(value = """
@@ -25,4 +26,6 @@ public interface ProductoRepository extends JpaRepository<Productos, Integer> {
     GROUP BY p.id_productos, s.cantidad_stock
     """, nativeQuery = true)
     List<ProductoResponse> findAllByProductos();
+
+    Optional<Productos> findByIdProductos(Integer idProductos);
 }

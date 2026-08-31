@@ -24,14 +24,9 @@ public class ClienteImpl implements ClienteService {
         Usuario usuario = usuarioRepository.findById(cliente.getUsuario().getIdUsuario()).orElseThrow(
                 (() -> new RuntimeException("Usuario no encontrado con ID: " + cliente.getUsuario().getIdUsuario())));
 
-
-
-
-
         clienteRepository.findClienteByDocumento(cliente.getDocumento()).
                 orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "El cliente no existe"));
 
-        // throw new RequestException("Documento del cliente no exite", HttpStatus.BAD_REQUEST.value());
         try {
 
             cliente.setEstado("A");

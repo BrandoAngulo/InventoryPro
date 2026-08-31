@@ -1,6 +1,7 @@
 package com.example.soft.inventoryPro.Usuario.Models;
 
 import com.example.soft.inventoryPro.Clientes.Models.Cliente;
+import com.example.soft.inventoryPro.venta.Models.Ventas;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -37,10 +38,10 @@ public class Usuario {
     String celular;
 
     String estado;
-/*
+
     @Transient
     @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<Pedido> pedidos; */
+    private List<Ventas> ventas;
 
     @Transient
     @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, fetch = FetchType.LAZY)

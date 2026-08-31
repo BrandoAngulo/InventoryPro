@@ -29,7 +29,7 @@ public class Productos {
     private Integer precioCompra;
 
     private Integer precioVenta;
-
+    private LocalDate fechaIngreso;
     private Integer cantidad;
 
     private String observacion;
