@@ -12,8 +12,7 @@ public interface ProductoRepository extends JpaRepository<Productos, Integer> {
     @Query(value = """
     SELECT 
         p.id_productos,
-        p.nombre,
-        p.referencia,
+        p.nombre_producto,
         p.precio_venta,
         p.fecha_ingreso,
         s.cantidad_stock,

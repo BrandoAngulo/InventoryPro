@@ -24,8 +24,12 @@ public class ClienteImpl implements ClienteService {
         Usuario usuario = usuarioRepository.findById(cliente.getUsuario().getIdUsuario()).orElseThrow(
                 (() -> new RuntimeException("Usuario no encontrado con ID: " + cliente.getUsuario().getIdUsuario())));
 
-        clienteRepository.findClienteByDocumento(cliente.getDocumento()).
-                orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "El cliente no existe"));
+        clienteRepository.findClienteByDocumento(cliente.getDocumento()).ifPresent(c -> {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "El cliente ya existe"
+            );
+        });
 
         try {
 

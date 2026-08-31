@@ -18,12 +18,15 @@ public class ProductosController {
 
     @Autowired
     private ProductosImpl productosImpl;
+
     @PostMapping("/registrarProductos")
     public ResponseEntity<Object> registrarProducto(@RequestBody Productos productos){
 
+
         Productos productoGuardado = productosImpl.registrarProductos(productos);
-        System.out.println("productoGuardado" + productoGuardado);
-        return ResponseEntity.status(HttpStatus.CREATED).body(productoGuardado);
+
+
+        return ResponseEntity.status(HttpStatus.OK).body(productoGuardado);
 
     }
 
@@ -32,7 +35,7 @@ public class ProductosController {
 
         Productos productoGuardado = productosImpl.actualizarProductos(productos);
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(productoGuardado);
+        return ResponseEntity.status(HttpStatus.OK).body(productoGuardado);
 
     }
 

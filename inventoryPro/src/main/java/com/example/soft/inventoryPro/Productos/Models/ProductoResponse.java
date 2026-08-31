@@ -6,17 +6,19 @@ import java.time.LocalDate;
 public class ProductoResponse {
     private Integer idProductos;
     private String nombre;
-    private String referencia;
+    //private String referencia;
     private Integer precioventa;
-    private Date fechaIngreso;
+    private LocalDate fechaIngreso;
     private Integer cantidadStock;
     private String observacion;
     private String categoriasConcat;
 
-    public ProductoResponse(Integer idProductos,String nombre, String referencia, Integer precioventa, Date  fechaIngreso, Integer cantidadStock, String observacion, String categoriasConcat) {
+    public ProductoResponse(Integer idProductos,String nombre,
+                           // String referencia,
+                            Integer precioventa, LocalDate  fechaIngreso, Integer cantidadStock, String observacion, String categoriasConcat) {
         this.idProductos = idProductos;
         this.nombre = nombre;
-        this.referencia = referencia;
+        //this.referencia = referencia;
         this.precioventa = precioventa;
         this.fechaIngreso = fechaIngreso;
         this.cantidadStock = cantidadStock;
@@ -40,13 +42,13 @@ public class ProductoResponse {
         this.nombre = nombre;
     }
 
-    public String getReferencia() {
+    /*public String getReferencia() {
         return referencia;
-    }
+    }*/
 
-    public void setReferencia(String referencia) {
+    /*public void setReferencia(String referencia) {
         this.referencia = referencia;
-    }
+    }*/
 
     public Integer getPrecioVenta() {
         return precioventa;
@@ -56,13 +58,13 @@ public class ProductoResponse {
         this.precioventa = precioventa;
     }
 
-    public Date getFechaIngreso() { return fechaIngreso; }
-    public void setFechaIngreso(Date fechaIngreso) { this.fechaIngreso = fechaIngreso; }
+    public LocalDate getFechaIngreso() { return fechaIngreso; }
+    public void setFechaIngreso(LocalDate fechaIngreso) { this.fechaIngreso = fechaIngreso; }
 
     // Si quieres convertirlo a LocalDate al exponerlo:
-    public LocalDate getFechaIngresoAsLocalDate() {
+   /* public LocalDate getFechaIngresoAsLocalDate() {
         return fechaIngreso != null ? fechaIngreso.toLocalDate() : null;
-    }
+    } */
 
     public Integer getCantidadStock() {
         return cantidadStock;

@@ -33,11 +33,11 @@ public class ProductosImpl implements ProductoService {
     private BodegaRepository bodegaRepository;
     @Override
     public Productos registrarProductos(Productos productos) {
-        Productos producto = productoRepository.findByIdProductos(productos.getIdProductos())
+       /* Productos producto = productoRepository.findByIdProductos(productos.getIdProductos())
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
                         "Producto no encontrado con ID: " + productos.getIdProductos()
-                ));
+                )); */
         Set<Categoria> categoriasList = productos.getCategorias().stream()
                 .map(modulo -> categoriaRepository.findById(modulo.getIdCategoria()).orElseThrow(() -> new ResponseStatusException(
                                 HttpStatus.NOT_FOUND,
