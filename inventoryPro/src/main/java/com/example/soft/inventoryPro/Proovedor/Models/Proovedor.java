@@ -36,6 +36,7 @@ public class Proovedor {
     private Boolean estado;
 
     @ManyToMany(mappedBy = "proveedores")
+    @Transient
     private Set<Productos> productos;
 
 }
