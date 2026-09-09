@@ -1,10 +1,38 @@
 HELP.md
 target/
 .mvn/wrapper/maven-wrapper.jar
+!.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
 
 ### STS ###
+# Environment & Secrets
+.env
+.env.local
+.env.*.local
+*.env
+*.key
+*.pem
+*.p12
+*.jks
+*.crt
+
+# Database & Local Storage
+*.db
+*.sqlite
+*.sqlite3
+h2-data/
+*.h2.db
+
+# Logs & Temp Files
+logs/
+*.log
+*.tmp
+*.bak
+*.swp
+.mvn/.develocity/
+
+# STS / Eclipse
 .apt_generated
 .classpath
 .factorypath
@@ -14,12 +42,15 @@ target/
 .sts4-cache
 
 ### IntelliJ IDEA ###
+# IntelliJ IDEA
 .idea
 *.iws
 *.iml
 *.ipr
+out/
 
 ### NetBeans ###
+# NetBeans
 /nbproject/private/
 /nbbuild/
 /dist/
@@ -30,4 +61,15 @@ build/
 !**/src/test/**/build/
 
 ### VS Code ###
+# VS Code & Tooling
 .vscode/
+.antigravity/
+
+# OS Generated Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db

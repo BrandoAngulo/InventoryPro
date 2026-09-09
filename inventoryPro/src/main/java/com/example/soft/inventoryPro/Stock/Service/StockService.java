@@ -1,15 +1,13 @@
 package com.example.soft.inventoryPro.Stock.Service;
 
-import com.example.soft.inventoryPro.Stock.Models.Stock;
+import com.example.soft.inventoryPro.Stock.dto.StockRequestDTO;
+import com.example.soft.inventoryPro.Stock.dto.StockResponseDTO;
 
 import java.util.List;
 
 public interface StockService {
-    Stock registrarStockProducto(Stock stock);
-
-    Stock actualizarStock(Stock stock);
-
-    Stock finByIdStock(Integer idStock);
-
-    List<Stock> findByAllStock();
+    StockResponseDTO registrarStockProducto(StockRequestDTO dto);
+    StockResponseDTO actualizarStock(Integer id, StockRequestDTO dto);
+    StockResponseDTO finByIdStock(Integer idStock);
+    List<StockResponseDTO> findByAllStock();
 }

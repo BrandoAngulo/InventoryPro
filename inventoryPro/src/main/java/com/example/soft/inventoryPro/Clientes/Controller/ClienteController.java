@@ -1,33 +1,50 @@
 package com.example.soft.inventoryPro.Clientes.Controller;
 
-import com.example.soft.inventoryPro.Categoria.Models.Categoria;
-import com.example.soft.inventoryPro.Clientes.Models.Cliente;
-import com.example.soft.inventoryPro.Clientes.Service.Impl.ClienteImpl;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.example.soft.inventoryPro.Clientes.Service.ClienteService;
+import com.example.soft.inventoryPro.Clientes.dto.ClienteRequestDTO;
+import com.example.soft.inventoryPro.Clientes.dto.ClienteResponseDTO;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
-@RequestMapping("/Cliente")
+@RequestMapping("/clientes")
+@RequiredArgsConstructor
 public class ClienteController {
-    @Autowired
-    private ClienteImpl clienteService;
 
-    @PostMapping("/registrarCliente")
-    public ResponseEntity<Object> registrarClientes(@RequestBody Cliente cliente) {
-        Cliente clienteGuardado = clienteService.registrarCliente(cliente);
+    private final ClienteService clienteService;
+
+    @PostMapping
+    public ResponseEntity<ClienteResponseDTO> registrarCliente(@Valid @RequestBody ClienteRequestDTO dto) {
+        ClienteResponseDTO clienteGuardado = clienteService.registrarCliente(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(clienteGuardado);
-
     }
 
+    @GetMapping
+    public ResponseEntity<List<ClienteResponseDTO>> listarClientes() {
+        List<ClienteResponseDTO> clientes = clienteService.obtenerTodos();
+        return ResponseEntity.ok(clientes);
+    }
 
-    @GetMapping("/traerClienteid/{id}")
-    public ResponseEntity<Object> ClientePorId(@PathVariable Integer id) {
-        Cliente clienteFindById = clienteService.traerClienteId(id);
-        return  ResponseEntity.status(HttpStatus.OK).body(clienteFindById);
+    @GetMapping("/{id}")
+    public ResponseEntity<ClienteResponseDTO> clientePorId(@PathVariable Long id) {
+        ClienteResponseDTO cliente = clienteService.traerClienteId(id);
+        return ResponseEntity.ok(cliente);
+    }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<ClienteResponseDTO> actualizarCliente(@PathVariable Long id, @Valid @RequestBody ClienteRequestDTO dto) {
+        ClienteResponseDTO clienteActualizado = clienteService.actualizarCliente(id, dto);
+        return ResponseEntity.ok(clienteActualizado);
+    }
 
-
+    @PatchMapping("/{id}/estado")
+    public ResponseEntity<ClienteResponseDTO> cambiarEstado(@PathVariable Long id) {
+        ClienteResponseDTO clienteActualizado = clienteService.cambiarEstado(id);
+        return ResponseEntity.ok(clienteActualizado);
     }
 }

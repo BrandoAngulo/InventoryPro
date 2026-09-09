@@ -3,68 +3,57 @@ package com.example.soft.inventoryPro.Bodega.Service.Impl;
 import com.example.soft.inventoryPro.Bodega.Models.Bodega;
 import com.example.soft.inventoryPro.Bodega.Repository.BodegaRepository;
 import com.example.soft.inventoryPro.Bodega.Service.BodegaService;
-import com.example.soft.inventoryPro.Categoria.Models.Categoria;
+import com.example.soft.inventoryPro.Bodega.dto.BodegaRequestDTO;
+import com.example.soft.inventoryPro.Bodega.dto.BodegaResponseDTO;
+import com.example.soft.inventoryPro.Bodega.mapper.BodegaMapper;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.stream.Collectors;
+
 @Slf4j
 @Service
-public class BodegaServiceImpl  implements BodegaService {
-    @Autowired
-    BodegaRepository bodegaRepository;
+@RequiredArgsConstructor
+public class BodegaServiceImpl implements BodegaService {
+
+    private final BodegaRepository bodegaRepository;
+
     @Override
-    public Bodega registrarBodega(Bodega bodega) {
-        try {
-
-            return bodegaRepository.save(bodega);
-
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-    @Override
-    public List<Bodega> traerTodasBoderga() {
-        try {
-            List<Bodega> bodegas = bodegaRepository.findAll();
-
-
-            return bodegas;
-
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+    public BodegaResponseDTO registrarBodega(BodegaRequestDTO dto) {
+        Bodega bodega = BodegaMapper.toEntity(dto);
+        Bodega guardada = bodegaRepository.save(bodega);
+        return BodegaMapper.toDTO(guardada);
     }
 
     @Override
-    public Bodega actualizarBodega(Bodega bodega) {
-        Bodega actualizarBodega = bodegaRepository.findById(bodega.getIdBodega()).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Bodega no encontrada con ID: " + bodega.getIdBodega()));
-
-        try{
-            actualizarBodega.setNombre(bodega.getNombre());
-
-            return bodegaRepository.save(actualizarBodega);
-
-        }catch (Exception e){
-            throw new RuntimeException(e);
-        }
+    public List<BodegaResponseDTO> traerTodasBoderga() {
+        return bodegaRepository.findAll().stream()
+                .map(BodegaMapper::toDTO)
+                .collect(Collectors.toList());
     }
 
     @Override
-    public Bodega traerIdBoderga(Integer id) {
-        try {
+    public BodegaResponseDTO actualizarBodega(Integer id, BodegaRequestDTO dto) {
+        Bodega bodegaExistente = bodegaRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Bodega no encontrada con ID: " + id));
 
-            Bodega bodegaId = bodegaRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Bodega no encontrada con ID: " + id));
-
-            return  bodegaId;
-
-        } catch(RuntimeException ex) {
-            log.error("traerBodega: ".concat(ex.getMessage())
-            );
-            throw new RuntimeException(ex);
+        bodegaExistente.setNombre(dto.getNombre());
+        if (dto.getFechaCreacionBodega() != null) {
+            bodegaExistente.setFechaCreacionBodega(dto.getFechaCreacionBodega());
         }
+
+        Bodega actualizada = bodegaRepository.save(bodegaExistente);
+        return BodegaMapper.toDTO(actualizada);
+    }
+
+    @Override
+    public BodegaResponseDTO traerIdBoderga(Integer id) {
+        Bodega bodega = bodegaRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Bodega no encontrada con ID: " + id));
+        return BodegaMapper.toDTO(bodega);
     }
 }

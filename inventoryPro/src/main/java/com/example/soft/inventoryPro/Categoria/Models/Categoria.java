@@ -23,7 +23,13 @@ public class Categoria {
 
     String nombreCategoria;
 
+    String descripcion;
+
     @ManyToMany(mappedBy = "categorias")
     @JsonIgnore
     private Set<Productos> productos = new HashSet<>();
+
+    public String getNombre() {
+        return nombreCategoria;
+    }
 }

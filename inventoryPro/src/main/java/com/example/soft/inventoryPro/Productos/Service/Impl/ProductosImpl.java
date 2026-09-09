@@ -1,142 +1,130 @@
 package com.example.soft.inventoryPro.Productos.Service.Impl;
 
-import com.example.soft.inventoryPro.Bodega.Models.Bodega;
-import com.example.soft.inventoryPro.Bodega.Repository.BodegaRepository;
 import com.example.soft.inventoryPro.Categoria.Models.Categoria;
 import com.example.soft.inventoryPro.Categoria.Repository.CategoriaRepository;
-import com.example.soft.inventoryPro.Productos.Models.ProductoResponse;
 import com.example.soft.inventoryPro.Productos.Models.Productos;
 import com.example.soft.inventoryPro.Productos.Repository.ProductoRepository;
 import com.example.soft.inventoryPro.Productos.Service.ProductoService;
+import com.example.soft.inventoryPro.Productos.dto.ProductoRequestDTO;
+import com.example.soft.inventoryPro.Productos.dto.ProductoResponseDTO;
+import com.example.soft.inventoryPro.Productos.mapper.ProductoMapper;
+import com.example.soft.inventoryPro.Proovedor.Models.Proovedor;
+import com.example.soft.inventoryPro.Proovedor.Repository.ProovedorRepository;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class ProductosImpl implements ProductoService {
-    @Autowired
-    private ProductoRepository productoRepository;
 
-    @Autowired
-    private CategoriaRepository categoriaRepository;
+    private final ProductoRepository productoRepository;
+    private final CategoriaRepository categoriaRepository;
+    private final ProovedorRepository proovedorRepository;
+    private final ProductoMapper productoMapper;
 
-    @Autowired
-    private BodegaRepository bodegaRepository;
     @Override
-    public Productos registrarProductos(Productos productos) {
-       /* Productos producto = productoRepository.findByIdProductos(productos.getIdProductos())
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "Producto no encontrado con ID: " + productos.getIdProductos()
-                )); */
-        Set<Categoria> categoriasList = productos.getCategorias().stream()
-                .map(modulo -> categoriaRepository.findById(modulo.getIdCategoria()).orElseThrow(() ->
-                        new ResponseStatusException(
-                                HttpStatus.NOT_FOUND,
-                                "Categoría no encontrada con ID: " + modulo.getIdCategoria()
-                        ))
-                )
-                .collect(Collectors.toSet());
+    @Transactional
+    public ProductoResponseDTO registrarProductos(ProductoRequestDTO dto) {
+        Categoria categoria = categoriaRepository.findById(dto.getCategoriaId().intValue())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Categoría no encontrada con ID: " + dto.getCategoriaId()));
 
-        Set<Bodega> bodegaList = productos.getBodega().stream()
-                .map(bodegas -> bodegaRepository.findById(bodegas.getIdBodega()).orElseThrow(
-                        () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Bodega no esta registrada")
-                )).collect(Collectors.toSet());
+        Proovedor proveedor = proovedorRepository.findById(dto.getProveedorId().intValue())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Proveedor no encontrado con ID: " + dto.getProveedorId()));
 
-        try {
-            LocalDate fechaIngreso = productos.getFechaIngreso();
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        Productos producto = productoMapper.toEntity(dto);
 
-            String fechaIngre = fechaIngreso.format(formatter);
+        Set<Categoria> catSet = new HashSet<>();
+        catSet.add(categoria);
+        producto.setCategorias(catSet);
 
+        Set<Proovedor> provSet = new HashSet<>();
+        provSet.add(proveedor);
+        producto.setProveedores(provSet);
 
-            LocalDate nuevaFechaIngreso = LocalDate.parse(fechaIngre, formatter);
-            productos.setFechaIngreso(nuevaFechaIngreso);
+        Productos guardado = productoRepository.save(producto);
+        return productoMapper.toDto(guardado);
+    }
 
+    @Override
+    @Transactional
+    public ProductoResponseDTO actualizarProductos(Long id, ProductoRequestDTO dto) {
+        Productos producto = productoRepository.findById(id.intValue())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Producto no encontrado con ID: " + id));
 
-
-
-            productos.setCategorias(categoriasList);
-            productos.setBodega(bodegaList);
-
-
-            return productoRepository.save(productos);
-        }catch (Exception e){
-            throw new RuntimeException(e);
+        if (dto.getCategoriaId() != null) {
+            Categoria categoria = categoriaRepository.findById(dto.getCategoriaId().intValue())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Categoría no encontrada con ID: " + dto.getCategoriaId()));
+            Set<Categoria> catSet = new HashSet<>();
+            catSet.add(categoria);
+            producto.setCategorias(catSet);
         }
-    }
 
-    @Override
-    public Productos actualizarProductos(Productos productos) {
-        Productos actualizarProductos = productoRepository.findById(productos.getIdProductos()).orElseThrow();
-        Set<Categoria> categoriasList = productos.getCategorias().stream()
-                .map(modulo -> categoriaRepository.findById(modulo.getIdCategoria()).orElseThrow(() -> new ResponseStatusException(
-                                HttpStatus.NOT_FOUND,
-                                "Categoría no encontrada con ID: " + modulo.getIdCategoria()
-                        ))
-                )
-                .collect(Collectors.toSet());
-
-        try{
-            actualizarProductos.setNombreProducto(productos.getNombreProducto());
-
-            actualizarProductos.setPrecioVenta(productos.getPrecioVenta());
-            actualizarProductos.setFechaIngreso(productos.getFechaIngreso());
-            actualizarProductos.setObservacion(productos.getObservacion());
-            actualizarProductos.setCategorias(categoriasList);
-
-
-
-            return productoRepository.save(actualizarProductos);
-        }catch (Exception e){
-            throw new RuntimeException(e);
+        if (dto.getProveedorId() != null) {
+            Proovedor proveedor = proovedorRepository.findById(dto.getProveedorId().intValue())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Proveedor no encontrado con ID: " + dto.getProveedorId()));
+            Set<Proovedor> provSet = new HashSet<>();
+            provSet.add(proveedor);
+            producto.setProveedores(provSet);
         }
+
+        productoMapper.updateEntityFromDto(dto, producto);
+        Productos actualizado = productoRepository.save(producto);
+        return productoMapper.toDto(actualizado);
     }
 
     @Override
-    public String eliminarProductos(Integer id) {
-        return null;
+    @Transactional
+    public void eliminarProductos(Long id) {
+        Productos producto = productoRepository.findById(id.intValue())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Producto no encontrado con ID: " + id));
+        producto.setActivo(false);
+        productoRepository.save(producto);
     }
 
     @Override
-    public Productos findByIdProductos(Integer id) {
-        try {
-            Productos productos = productoRepository.findById(id) .orElseThrow(() -> new ResponseStatusException(
-                    HttpStatus.NOT_FOUND,
-                    "Producto no encontrado con ID: " + id
-            ));
-
-            return productos;
-
-
-        }catch (Exception e){
-            throw new RuntimeException(e);
-        }
+    @Transactional(readOnly = true)
+    public ProductoResponseDTO findByIdProductos(Long id) {
+        Productos producto = productoRepository.findById(id.intValue())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Producto no encontrado con ID: " + id));
+        return productoMapper.toDto(producto);
     }
 
     @Override
-    public List<ProductoResponse> findByAllProductos() {
-        try{
-            List<ProductoResponse> Product = productoRepository.findAllByProductos();
-            if (Product.isEmpty()) {
-
-                throw new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,"La lista esta vacia");
-            }
-            return Product;
-        }catch  (Exception e){
-            throw new RuntimeException(e);
-
-        }
+    @Transactional(readOnly = true)
+    public List<ProductoResponseDTO> findByAllProductos() {
+        return productoRepository.findAll()
+                .stream()
+                .map(productoMapper::toDto)
+                .toList();
     }
 
+    @Override
+    @Transactional
+    public ProductoResponseDTO cambiarEstado(Long id) {
+        Productos producto = productoRepository.findById(id.intValue())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Producto no encontrado con ID: " + id));
+
+        boolean actual = producto.getActivo() != null ? producto.getActivo() : true;
+        producto.setActivo(!actual);
+        Productos actualizado = productoRepository.save(producto);
+        return productoMapper.toDto(actualizado);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ProductoResponseDTO> listarProductosBajoStock() {
+        return productoRepository.findProductosBajoStock()
+                .stream()
+                .map(productoMapper::toDto)
+                .toList();
+    }
 }

@@ -1,50 +1,44 @@
 package com.example.soft.inventoryPro.Stock.Controller;
 
-import com.example.soft.inventoryPro.Stock.Models.Stock;
-import com.example.soft.inventoryPro.Stock.Service.Impl.StockImpl;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.example.soft.inventoryPro.Stock.Service.StockService;
+import com.example.soft.inventoryPro.Stock.dto.StockRequestDTO;
+import com.example.soft.inventoryPro.Stock.dto.StockResponseDTO;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@CrossOrigin(origins = "*")
 @RestController
 @RequestMapping("/stock")
+@RequiredArgsConstructor
 public class StockController {
-    @Autowired
-    private StockImpl stockImpl;
 
-    @PostMapping("/registrarStock")
-    public ResponseEntity<Object> registrarStock(@RequestBody Stock stock) {
+    private final StockService stockService;
 
-        Stock stockGuardado = stockImpl.registrarStockProducto(stock);
-
+    @PostMapping
+    public ResponseEntity<StockResponseDTO> registrarStock(@Valid @RequestBody StockRequestDTO dto) {
+        StockResponseDTO stockGuardado = stockService.registrarStockProducto(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(stockGuardado);
-
     }
 
-    @PutMapping("/actualizar")
-    public ResponseEntity<Object> stockStock(@RequestBody Stock stock) {
-
-        Stock StockActualizado = stockImpl.actualizarStock(stock);
-
-        return ResponseEntity.status(HttpStatus.CREATED).body(StockActualizado);
-
+    @PutMapping("/{id}")
+    public ResponseEntity<StockResponseDTO> actualizarStock(@PathVariable Integer id, @Valid @RequestBody StockRequestDTO dto) {
+        StockResponseDTO stockActualizado = stockService.actualizarStock(id, dto);
+        return ResponseEntity.ok(stockActualizado);
     }
 
-    @GetMapping("/traerporId/{id}")
-    public ResponseEntity<Object> findByIdstock(@PathVariable Integer id) {
-        Stock stockFindById = stockImpl.finByIdStock(id);
-        return ResponseEntity.status(HttpStatus.OK).body(stockFindById);
-
+    @GetMapping("/{id}")
+    public ResponseEntity<StockResponseDTO> findByIdStock(@PathVariable Integer id) {
+        StockResponseDTO stock = stockService.finByIdStock(id);
+        return ResponseEntity.ok(stock);
     }
 
-    @GetMapping("/traerporAll")
-    public ResponseEntity<Object> traerStock() {
-        List<Stock> stocksFindByAll = stockImpl.findByAllStock();
-        return ResponseEntity.status(HttpStatus.OK).body(stocksFindByAll);
-
+    @GetMapping
+    public ResponseEntity<List<StockResponseDTO>> traerStock() {
+        List<StockResponseDTO> stocks = stockService.findByAllStock();
+        return ResponseEntity.ok(stocks);
     }
 }

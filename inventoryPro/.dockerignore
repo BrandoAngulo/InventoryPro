@@ -1,0 +1,37 @@
+# Build output and temporary directories
+target/
+*.jar
+*.war
+*.ear
+
+# Version control
+.git/
+.gitignore
+.gitattributes
+
+# IDE & Editor files
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Docker configuration files
+Dockerfile
+Dockerfile.dev
+docker-compose*.yml
+.dockerignore
+
+# Environment variables files (except template)
+.env
+.env.local
+.env.*
+!.env.example
+
+# Logs and temp files
+*.log
+tmp/

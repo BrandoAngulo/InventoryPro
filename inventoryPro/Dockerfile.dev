@@ -1,0 +1,22 @@
+FROM eclipse-temurin:21-jdk-alpine
+
+WORKDIR /app
+
+# Copy Maven wrapper and dependencies setup files
+COPY .mvn/ .mvn
+COPY mvnw pom.xml ./
+
+# Grant execution permissions for Maven wrapper
+RUN chmod +x mvnw
+
+# Pre-fetch dependencies to speed up future builds
+RUN ./mvnw dependency:go-offline -B || true
+
+# Copy source code
+COPY src ./src
+
+# Expose default application port
+EXPOSE 8080
+
+# Execute Spring Boot application in development mode
+CMD ["./mvnw", "spring-boot:run"]

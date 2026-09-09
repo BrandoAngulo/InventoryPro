@@ -1,8 +1,10 @@
 package com.example.soft.inventoryPro.Bodega.Controller;
 
-import com.example.soft.inventoryPro.Bodega.Models.Bodega;
-import com.example.soft.inventoryPro.Bodega.Service.Impl.BodegaServiceImpl;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.example.soft.inventoryPro.Bodega.Service.BodegaService;
+import com.example.soft.inventoryPro.Bodega.dto.BodegaRequestDTO;
+import com.example.soft.inventoryPro.Bodega.dto.BodegaResponseDTO;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -10,35 +12,33 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/Bodega")
+@RequestMapping("/bodegas")
+@RequiredArgsConstructor
 public class BodegaController {
-    @Autowired
-    BodegaServiceImpl bodegaService;
-    @PostMapping("/registrarBodega")
 
-    public ResponseEntity<Object> registrarBodega(@RequestBody Bodega bodega) {
-        Bodega bodegaRegistrada = bodegaService.registrarBodega(bodega);
+    private final BodegaService bodegaService;
 
-        return   ResponseEntity.status(HttpStatus.OK).body(bodegaRegistrada);
+    @PostMapping
+    public ResponseEntity<BodegaResponseDTO> registrarBodega(@Valid @RequestBody BodegaRequestDTO dto) {
+        BodegaResponseDTO bodegaRegistrada = bodegaService.registrarBodega(dto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(bodegaRegistrada);
     }
 
-
-    @GetMapping("/listarBodegas")
-    public ResponseEntity<Object> listarBodegas() {
-
-        List<Bodega> traetBodegas = bodegaService.traerTodasBoderga();
-
-        return   ResponseEntity.status(HttpStatus.OK).body(traetBodegas);
-
-
+    @GetMapping
+    public ResponseEntity<List<BodegaResponseDTO>> listarBodegas() {
+        List<BodegaResponseDTO> bodegas = bodegaService.traerTodasBoderga();
+        return ResponseEntity.ok(bodegas);
     }
 
-    @GetMapping("/listarBodega/{id}")
-    public ResponseEntity<Object> listarBodega(@PathVariable Integer id) {
+    @GetMapping("/{id}")
+    public ResponseEntity<BodegaResponseDTO> listarBodega(@PathVariable Integer id) {
+        BodegaResponseDTO bodega = bodegaService.traerIdBoderga(id);
+        return ResponseEntity.ok(bodega);
+    }
 
-        Bodega bodegaFindById = bodegaService.traerIdBoderga(id);
-        return  ResponseEntity.status(HttpStatus.OK).body(bodegaFindById);
-
-
+    @PutMapping("/{id}")
+    public ResponseEntity<BodegaResponseDTO> actualizarBodega(@PathVariable Integer id, @Valid @RequestBody BodegaRequestDTO dto) {
+        BodegaResponseDTO bodegaActualizada = bodegaService.actualizarBodega(id, dto);
+        return ResponseEntity.ok(bodegaActualizada);
     }
 }

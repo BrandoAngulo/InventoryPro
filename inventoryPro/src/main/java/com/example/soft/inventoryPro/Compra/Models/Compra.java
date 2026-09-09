@@ -5,9 +5,10 @@ import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.LocalDate;
-import java.util.HashSet;
-import java.util.Set;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 @Setter
@@ -15,25 +16,44 @@ import java.util.Set;
 @NoArgsConstructor
 @Builder
 @Entity
-@ToString
+@ToString(exclude = "detalles")
+@Table(name = "compras")
 public class Compra {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id_compra")
     private Integer idCompra;
 
-    private LocalDate fechaCompra;
+    @Column(name = "numero_factura_proveedor", length = 50)
+    private String numeroFacturaProveedor;
 
-    private Double total;
+    @Column(name = "fecha_compra")
+    private LocalDateTime fechaCompra;
 
-    @ManyToOne
+    @Column(precision = 12, scale = 2)
+    private BigDecimal total;
+
+    @Column(length = 255)
+    private String observacion;
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_proveedor")
     private Proovedor proovedor;
 
-    @OneToMany(
-            mappedBy = "compra",
-            cascade = CascadeType.ALL
-    )
+    @OneToMany(mappedBy = "compra", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
-    private Set<DetalleCompra> detalles = new HashSet<>();
+    @Builder.Default
+    private List<DetalleCompra> detalles = new ArrayList<>();
 
+    @PrePersist
+    public void prePersist() {
+        if (this.fechaCompra == null) {
+            this.fechaCompra = LocalDateTime.now();
+        }
+    }
+
+    public Long getId() {
+        return idCompra != null ? idCompra.longValue() : null;
+    }
 }

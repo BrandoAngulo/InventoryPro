@@ -1,37 +1,38 @@
 package com.example.soft.inventoryPro.Compra.Controller;
 
-import com.example.soft.inventoryPro.Clientes.Models.Cliente;
-import com.example.soft.inventoryPro.Clientes.Service.Impl.ClienteImpl;
-import com.example.soft.inventoryPro.Compra.Models.Compra;
-import com.example.soft.inventoryPro.Compra.Service.Impl.DetalleImpl;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.example.soft.inventoryPro.Compra.Service.CompraService;
+import com.example.soft.inventoryPro.Compra.dto.CompraRequestDTO;
+import com.example.soft.inventoryPro.Compra.dto.CompraResponseDTO;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
-@RequestMapping("/Compra")
+@RequestMapping("/compras")
+@RequiredArgsConstructor
 public class CompraController {
 
-    @Autowired
-    private DetalleImpl detalleImpl;
+    private final CompraService compraService;
 
-    @PostMapping("/registrarCompra")
-    public ResponseEntity<Object> registrarCompra(@RequestBody Compra compra) {
-        Compra clienteCompra = detalleImpl.registrarCompra(compra);
-        return ResponseEntity.status(HttpStatus.CREATED).body(clienteCompra);
-
+    @PostMapping
+    public ResponseEntity<CompraResponseDTO> registrarCompra(@Valid @RequestBody CompraRequestDTO dto) {
+        CompraResponseDTO compraGuardada = compraService.registrarCompra(dto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(compraGuardada);
     }
 
+    @GetMapping
+    public ResponseEntity<List<CompraResponseDTO>> listarCompras() {
+        List<CompraResponseDTO> compras = compraService.findByAllCompra();
+        return ResponseEntity.ok(compras);
+    }
 
-
-
-
-
-
-
-
+    @GetMapping("/{id}")
+    public ResponseEntity<CompraResponseDTO> findByIdCompra(@PathVariable Integer id) {
+        CompraResponseDTO compra = compraService.findByIdCompra(id);
+        return ResponseEntity.ok(compra);
+    }
 }

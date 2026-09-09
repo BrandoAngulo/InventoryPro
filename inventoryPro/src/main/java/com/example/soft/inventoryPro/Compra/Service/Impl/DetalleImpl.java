@@ -2,7 +2,7 @@ package com.example.soft.inventoryPro.Compra.Service.Impl;
 
 import com.example.soft.inventoryPro.Compra.Models.Compra;
 import com.example.soft.inventoryPro.Compra.Models.DetalleCompra;
-import com.example.soft.inventoryPro.Compra.Repository.CompraRepositoy;
+import com.example.soft.inventoryPro.Compra.Repository.CompraRepository;
 import com.example.soft.inventoryPro.Compra.Repository.DetalleCompraRepository;
 import com.example.soft.inventoryPro.Compra.Service.DetalleService;
 import com.example.soft.inventoryPro.Productos.Models.Productos;
@@ -18,6 +18,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 
 @Slf4j
@@ -34,13 +36,10 @@ public class DetalleImpl implements DetalleService {
     private ProovedorRepository proveedorRepository;
 
     @Autowired
-    private CompraRepositoy compraRepository;
+    private CompraRepository compraRepository;
 
     @Autowired
     private StockRepository stockRepository;
-
-
-
 
     @Override
     @Transactional
@@ -57,13 +56,13 @@ public class DetalleImpl implements DetalleService {
         // 2. Asociar proveedor real
         compra.setProovedor(proveedor);
 
-        double total = 0;
+        BigDecimal total = BigDecimal.ZERO;
 
         // 3. Recorrer los productos de la compra
         for (DetalleCompra detalle : compra.getDetalles()) {
 
             // 4. Buscar producto
-           Productos producto = productoRepository
+            Productos producto = productoRepository
                     .findById(detalle.getProducto().getIdProductos())
                     .orElseThrow(() -> new ResponseStatusException(
                             HttpStatus.NOT_FOUND,
@@ -90,7 +89,7 @@ public class DetalleImpl implements DetalleService {
             }
 
             // 6. Validar precio
-            if (detalle.getPrecioCompra() == null || detalle.getPrecioCompra() <= 0) {
+            if (detalle.getPrecioCompra() == null || detalle.getPrecioCompra().compareTo(BigDecimal.ZERO) <= 0) {
                 throw new ResponseStatusException(
                         HttpStatus.BAD_REQUEST,
                         "El precio de compra debe ser mayor que 0"
@@ -98,8 +97,9 @@ public class DetalleImpl implements DetalleService {
             }
 
             // 7. Calcular subtotal
-            double subtotal =
-                    detalle.getCantidad() * detalle.getPrecioCompra();
+            BigDecimal subtotal = detalle.getPrecioCompra()
+                    .multiply(BigDecimal.valueOf(detalle.getCantidad()))
+                    .setScale(2, RoundingMode.HALF_UP);
 
             detalle.setSubtotal(subtotal);
 
@@ -109,14 +109,6 @@ public class DetalleImpl implements DetalleService {
             // 9. Asociar detalle con la compra
             detalle.setCompra(compra);
 
-            // 10. Aumentar inventario
-        /*    producto.setCantidad(
-                    producto.getCantidad() + detalle.getCantidad()
-            );
-
-            // 11. Guardar producto actualizado
-            productoRepository.save(producto); */
-
             stock.setCantidadStock(
                     stock.getCantidadStock() + detalle.getCantidad()
             );
@@ -124,7 +116,7 @@ public class DetalleImpl implements DetalleService {
             stockRepository.save(stock);
 
             // 12. Acumular total
-            total += subtotal;
+            total = total.add(subtotal);
         }
 
         // 13. Establecer total de la compra
@@ -132,7 +124,6 @@ public class DetalleImpl implements DetalleService {
 
         // 14. Guardar compra y sus detalles
         return compraRepository.save(compra);
-
     }
 
     @Override

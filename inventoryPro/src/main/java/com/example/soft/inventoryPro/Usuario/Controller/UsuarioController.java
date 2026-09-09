@@ -1,27 +1,38 @@
 package com.example.soft.inventoryPro.Usuario.Controller;
 
-import com.example.soft.inventoryPro.Categoria.Models.Categoria;
-import com.example.soft.inventoryPro.Usuario.Models.Usuario;
-import com.example.soft.inventoryPro.Usuario.Service.Impl.UsuarioImpl;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.example.soft.inventoryPro.Usuario.Service.UsuarioService;
+import com.example.soft.inventoryPro.Usuario.dto.UsuarioRequestDTO;
+import com.example.soft.inventoryPro.Usuario.dto.UsuarioResponseDTO;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/usuarios")
+@RequiredArgsConstructor
 public class UsuarioController {
-    @Autowired
-    private UsuarioImpl usuarioService;
 
-    @PostMapping("/registrarUsuario")
-    public ResponseEntity<Object> registrarUsuario(@RequestBody Usuario usuario){
+    private final UsuarioService usuarioService;
 
-          Usuario registrarUsuario = usuarioService.registrarUsuario(usuario);
-
+    @PostMapping
+    public ResponseEntity<UsuarioResponseDTO> registrarUsuario(@Valid @RequestBody UsuarioRequestDTO dto) {
+        UsuarioResponseDTO registrarUsuario = usuarioService.registrarUsuario(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(registrarUsuario);
+    }
+
+    @GetMapping
+    public ResponseEntity<List<UsuarioResponseDTO>> listarUsuarios() {
+        List<UsuarioResponseDTO> usuarios = usuarioService.listarUsuarios();
+        return ResponseEntity.ok(usuarios);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<UsuarioResponseDTO> obtenerPorId(@PathVariable Integer id) {
+        UsuarioResponseDTO usuario = usuarioService.obtenerPorId(id);
+        return ResponseEntity.ok(usuario);
     }
 }

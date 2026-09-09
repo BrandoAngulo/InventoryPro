@@ -8,4 +8,5 @@ import java.util.Optional;
 @Repository
 public interface ClienteRepository  extends JpaRepository<Cliente, Integer> {
     Optional<Cliente> findClienteByDocumento(Integer documento);
+    Long countByEstado(String estado);
 }
