@@ -2,7 +2,7 @@ package com.example.soft.inventoryPro.Inventario.dto;
 
 import com.example.soft.inventoryPro.Inventario.Models.TipoMovimiento;
 import lombok.*;
-import java.math.BigDecimal;
+
 import java.time.LocalDateTime;
 
 @Data
@@ -16,8 +16,8 @@ public class MovimientoInventarioResponseDTO {
     private String productoNombre;
     private TipoMovimiento tipoMovimiento;
     private Integer cantidad;
-    private BigDecimal precioUnitario;
-    private BigDecimal costoUnitario;
+    private Long precioUnitario;
+    private Long costoUnitario;
     private LocalDateTime fecha;
     private Long referenciaId;
     private String observacion;

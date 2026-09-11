@@ -3,7 +3,6 @@ package com.example.soft.inventoryPro.Compra.dto;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.*;
-import java.math.BigDecimal;
 
 @Data
 @Builder
@@ -22,18 +21,18 @@ public class DetalleCompraRequestDTO {
 
     @NotNull(message = "El precio unitario de compra es obligatorio")
     @Positive(message = "El precio unitario de compra debe ser mayor a 0")
-    private BigDecimal precioUnitario;
+    private Long precioUnitario;
 
-    private Double precioCompra;
+    private Long precioCompra;
 
     public Long getProductoId() {
         return productoId != null ? productoId : idProducto;
     }
 
-    public BigDecimal getPrecioUnitario() {
+    public Long getPrecioUnitario() {
         if (precioUnitario != null) {
             return precioUnitario;
         }
-        return precioCompra != null ? BigDecimal.valueOf(precioCompra) : null;
+        return precioCompra;
     }
 }

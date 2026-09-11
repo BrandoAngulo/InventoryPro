@@ -1,7 +1,7 @@
 package com.example.soft.inventoryPro.Compra.dto;
 
 import lombok.*;
-import java.math.BigDecimal;
+
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -14,7 +14,7 @@ public class CompraResponseDTO {
     private Long proveedorId;
     private String proveedorNombre;
     private String numeroFacturaProveedor;
-    private BigDecimal total;
+    private Long total;
     private LocalDateTime fecha;
     private String observacion;
     private List<DetalleCompraResponseDTO> detalles;

@@ -3,12 +3,12 @@ package com.example.soft.inventoryPro.Caja.Models;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "movimientos_caja")
-@Data
+@Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -25,8 +25,8 @@ public class MovimientoCaja {
     @Column(nullable = false, length = 20)
     private String tipo; // INGRESO_VENTA, INGRESO_MANUAL, EGRESO_MANUAL
 
-    @Column(nullable = false, precision = 12, scale = 2)
-    private BigDecimal monto;
+    @Column(nullable = false)
+    private Long monto;
 
     @Column(nullable = false, length = 255)
     private String concepto;

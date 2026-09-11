@@ -31,7 +31,7 @@ public class VentaController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<VentaResponseDTO> listarVentaPorId(@PathVariable Integer id) {
+    public ResponseEntity<VentaResponseDTO> listarVentaPorId(@PathVariable Long id) {
         VentaResponseDTO vs = ventaService.listarVentas(id);
         return ResponseEntity.ok(vs);
     }

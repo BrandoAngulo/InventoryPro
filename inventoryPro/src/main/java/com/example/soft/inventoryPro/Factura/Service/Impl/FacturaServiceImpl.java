@@ -16,17 +16,15 @@ import com.example.soft.inventoryPro.Inventario.Repository.MovimientoInventarioR
 import com.example.soft.inventoryPro.Productos.Models.Productos;
 import com.example.soft.inventoryPro.Productos.Repository.ProductoRepository;
 import com.example.soft.inventoryPro.Ultils.Errores.StockInsuficienteException;
+import com.example.soft.inventoryPro.common.exception.BusinessRuleException;
+import com.example.soft.inventoryPro.common.exception.ResourceNotFoundException;
 import com.example.soft.inventoryPro.venta.dto.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -51,18 +49,18 @@ public class FacturaServiceImpl implements FacturaService {
     public FacturaResponseDTO registrarFactura(FacturaRequestDTO dto) {
         // 1. Revisa que exista una sesión de Caja ABIERTA
         Caja caja = cajaRepository.findByEstado("ABIERTA")
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "No se puede emitir factura sin una caja abierta"));
+                .orElseThrow(() -> new BusinessRuleException("No se puede emitir factura sin una caja abierta"));
 
         // 2. Revisa que el Cliente exista
         Long cliId = dto.getClienteId();
-        Cliente cliente = clienteRepository.findById(cliId.intValue())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cliente no encontrado con ID: " + cliId));
+        Cliente cliente = clienteRepository.findById(cliId)
+                .orElseThrow(() -> new ResourceNotFoundException("Cliente no encontrado con ID: " + cliId));
 
         // 3. Valida disponibilidad de stock para todos los productos solicitados
         for (DetalleFacturaRequestDTO detalleDTO : dto.getDetalles()) {
             Long prodId = detalleDTO.getProductoId();
-            Productos producto = productoRepository.findById(prodId.intValue())
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Producto no encontrado con ID: " + prodId));
+            Productos producto = productoRepository.findById(prodId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Producto no encontrado con ID: " + prodId));
 
             int stockDisponible = producto.getCantidad() != null ? producto.getCantidad() : 0;
             if (detalleDTO.getCantidad() > stockDisponible) {
@@ -80,19 +78,20 @@ public class FacturaServiceImpl implements FacturaService {
                 .estado("PAGADA")
                 .fecha(LocalDateTime.now())
                 .observacion(dto.getObservacion())
-                .subtotal(BigDecimal.ZERO)
-                .impuesto(BigDecimal.ZERO)
-                .total(BigDecimal.ZERO)
+                .subtotal(0L)
+                .impuesto(0L)
+                .total(0L)
                 .detalles(new ArrayList<>())
                 .build();
 
         factura = facturaRepository.save(factura);
 
-        BigDecimal subtotalGeneral = BigDecimal.ZERO;
+        Long subtotalGeneral = 0L;
 
         for (DetalleFacturaRequestDTO detalleDTO : dto.getDetalles()) {
             Long prodId = detalleDTO.getProductoId();
-            Productos producto = productoRepository.findById(prodId.intValue()).orElseThrow();
+            Productos producto = productoRepository.findById(prodId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Producto no encontrado con ID: " + prodId));
 
             int stockDisponible = producto.getCantidad() != null ? producto.getCantidad() : 0;
             int cantidadSolicitada = detalleDTO.getCantidad();
@@ -102,10 +101,10 @@ public class FacturaServiceImpl implements FacturaService {
             producto.setCantidad(nuevoStock);
             productoRepository.save(producto);
 
-            BigDecimal precioVenta = detalleDTO.getPrecioUnitario();
-            BigDecimal costoUnitario = producto.getCostoPromedio() != null ? producto.getCostoPromedio() : BigDecimal.ZERO;
-            BigDecimal subtotalItem = precioVenta.multiply(BigDecimal.valueOf(cantidadSolicitada)).setScale(2, RoundingMode.HALF_UP);
-            subtotalGeneral = subtotalGeneral.add(subtotalItem);
+            Long precioVenta = detalleDTO.getPrecioUnitario();
+            Long costoUnitario = producto.getCostoPromedio() != null ? producto.getCostoPromedio() : 0L;
+            Long subtotalItem = precioVenta * cantidadSolicitada;
+            subtotalGeneral += subtotalItem;
 
             DetalleFactura detalle = DetalleFactura.builder()
                     .factura(factura)
@@ -138,10 +137,11 @@ public class FacturaServiceImpl implements FacturaService {
         Factura guardada = facturaRepository.save(factura);
 
         // 5. Generar automáticamente movimiento de caja INGRESO_VENTA
-        caja.setMontoIngresos(caja.getMontoIngresos().add(guardada.getTotal()));
-        BigDecimal esperado = caja.getMontoInicial()
-                .add(caja.getMontoIngresos())
-                .subtract(caja.getMontoEgresos());
+        Long montoIngresosActual = caja.getMontoIngresos() != null ? caja.getMontoIngresos() : 0L;
+        caja.setMontoIngresos(montoIngresosActual + guardada.getTotal());
+        Long inicial = caja.getMontoInicial() != null ? caja.getMontoInicial() : 0L;
+        Long egresos = caja.getMontoEgresos() != null ? caja.getMontoEgresos() : 0L;
+        Long esperado = inicial + caja.getMontoIngresos() - egresos;
         caja.setMontoEsperado(esperado);
         cajaRepository.save(caja);
 
@@ -162,15 +162,15 @@ public class FacturaServiceImpl implements FacturaService {
     @Override
     @Transactional(readOnly = true)
     public FacturaResponseDTO obtenerFacturaPorId(Long id) {
-        Factura factura = facturaRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Factura no encontrada con ID: " + id));
+        Factura factura = facturaRepository.findByIdWithDetails(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Factura no encontrada con ID: " + id));
         return toFacturaResponseDTO(factura);
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<FacturaResponseDTO> obtenerFacturas() {
-        return facturaRepository.findAll().stream()
+        return facturaRepository.findAllWithDetails().stream()
                 .map(this::toFacturaResponseDTO)
                 .collect(Collectors.toList());
     }
@@ -190,12 +190,12 @@ public class FacturaServiceImpl implements FacturaService {
         Cliente c = f.getCliente();
         String nombreCliente = c != null ? ((c.getNombre() != null ? c.getNombre() : "") + " " + (c.getApellido() != null ? c.getApellido() : "")).trim() : null;
         String docCliente = c != null && c.getDocumento() != null ? String.valueOf(c.getDocumento()) : null;
-        Long clienteId = c != null && c.getIdCliente() != null ? c.getIdCliente().longValue() : null;
+        Long clienteId = c != null ? c.getIdCliente() : null;
 
         List<DetalleFacturaResponseDTO> detallesDTO = f.getDetalles() != null ? f.getDetalles().stream()
                 .map(d -> DetalleFacturaResponseDTO.builder()
                         .id(d.getId())
-                        .productoId(d.getProducto() != null && d.getProducto().getIdProductos() != null ? d.getProducto().getIdProductos().longValue() : null)
+                        .productoId(d.getProducto() != null ? d.getProducto().getIdProductos() : null)
                         .productoCodigo(d.getProducto() != null ? d.getProducto().getCodigo() : null)
                         .productoNombre(d.getProducto() != null ? d.getProducto().getNombreProducto() : null)
                         .cantidad(d.getCantidad())

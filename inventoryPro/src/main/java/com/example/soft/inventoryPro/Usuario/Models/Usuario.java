@@ -13,31 +13,25 @@ import java.util.List;
 @NoArgsConstructor
 @Builder
 @Entity
-@ToString
 public class Usuario {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    Integer idUsuario;
+    private Long idUsuario;
 
+    private Integer documento;
 
-    Integer documento;
+    private String nombre;
 
-    String nombre;
+    private String apellido;
 
+    private String direccion;
 
-    String apellido;
+    private String correo;
 
+    private String celular;
 
-    String direccion;
-
-
-    String correo;
-
-
-    String celular;
-
-    String estado;
+    private String estado;
 
     @Transient
     @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, fetch = FetchType.LAZY)

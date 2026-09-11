@@ -4,14 +4,14 @@ import com.example.soft.inventoryPro.Clientes.Models.Cliente;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 @Entity
 @Table(name = "pedidos")
-@Data
+@Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -32,17 +32,17 @@ public class Pedido {
     @Column(nullable = false, length = 20)
     private EstadoPedido estado;
 
-    @Column(nullable = false, precision = 12, scale = 2)
-    private BigDecimal subtotal;
+    @Column(nullable = false)
+    private Long subtotal;
 
-    @Column(name = "descuento_general", nullable = false, precision = 12, scale = 2)
-    private BigDecimal descuentoGeneral;
+    @Column(name = "descuento_general", nullable = false)
+    private Long descuentoGeneral;
 
-    @Column(nullable = false, precision = 12, scale = 2)
-    private BigDecimal impuesto;
+    @Column(nullable = false)
+    private Long impuesto;
 
-    @Column(nullable = false, precision = 12, scale = 2)
-    private BigDecimal total;
+    @Column(nullable = false)
+    private Long total;
 
     @Column(length = 255)
     private String observacion;
@@ -53,8 +53,10 @@ public class Pedido {
     @Column(name = "fecha_actualizacion")
     private LocalDateTime fechaActualizacion;
 
+    @Version
+    private Long version;
+
     @OneToMany(mappedBy = "pedido", cascade = CascadeType.ALL, orphanRemoval = true)
-    @ToString.Exclude
     @Builder.Default
     private List<DetallePedido> detalles = new ArrayList<>();
 
@@ -67,10 +69,16 @@ public class Pedido {
             this.estado = EstadoPedido.PENDIENTE;
         }
         if (this.descuentoGeneral == null) {
-            this.descuentoGeneral = BigDecimal.ZERO;
+            this.descuentoGeneral = 0L;
         }
         if (this.impuesto == null) {
-            this.impuesto = BigDecimal.ZERO;
+            this.impuesto = 0L;
+        }
+        if (this.subtotal == null) {
+            this.subtotal = 0L;
+        }
+        if (this.total == null) {
+            this.total = 0L;
         }
     }
 

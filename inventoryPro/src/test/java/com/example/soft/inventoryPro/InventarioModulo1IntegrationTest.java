@@ -22,7 +22,6 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 import static org.hamcrest.Matchers.*;
@@ -59,9 +58,9 @@ class InventarioModulo1IntegrationTest {
         productoZero = productoRepository.save(Productos.builder()
                 .codigo("PROD-ZERO")
                 .nombreProducto("Aceite Premier 1L")
-                .precioCompra(0)
-                .precioVenta(12000)
-                .costoPromedio(BigDecimal.ZERO)
+                .precioCompra(0L)
+                .precioVenta(12000L)
+                .costoPromedio(0L)
                 .cantidad(0)
                 .stockMinimo(5)
                 .activo(true)
@@ -70,9 +69,9 @@ class InventarioModulo1IntegrationTest {
         productoExistente = productoRepository.save(Productos.builder()
                 .codigo("PROD-EXIST")
                 .nombreProducto("Harina Haz de Oros 1Kg")
-                .precioCompra(3000)
-                .precioVenta(5000)
-                .costoPromedio(new BigDecimal("3000.00"))
+                .precioCompra(3000L)
+                .precioVenta(5000L)
+                .costoPromedio(3000L)
                 .cantidad(10)
                 .stockMinimo(5)
                 .activo(true)
@@ -82,9 +81,9 @@ class InventarioModulo1IntegrationTest {
     @Test
     void registroInicial_ConStockCero_EstableceCPPDirecto() throws Exception {
         DetalleRegistroInicialRequestDTO detalle = DetalleRegistroInicialRequestDTO.builder()
-                .productoId(productoZero.getIdProductos().longValue())
+                .productoId(productoZero.getIdProductos())
                 .cantidad(20)
-                .costoUnitarioIngreso(new BigDecimal("8500.00"))
+                .costoUnitarioIngreso(8500L)
                 .build();
 
         RegistroInicialRequestDTO request = RegistroInicialRequestDTO.builder()
@@ -100,11 +99,11 @@ class InventarioModulo1IntegrationTest {
                 .andExpect(jsonPath("$[0].stockAnterior").value(0))
                 .andExpect(jsonPath("$[0].cantidadIngresada").value(20))
                 .andExpect(jsonPath("$[0].stockResultante").value(20))
-                .andExpect(jsonPath("$[0].cppResultante").value(8500.00));
+                .andExpect(jsonPath("$[0].cppResultante").value(8500));
 
         Productos actualizado = productoRepository.findById(productoZero.getIdProductos()).orElseThrow();
         assertEquals(20, actualizado.getCantidad());
-        assertEquals(new BigDecimal("8500.00"), actualizado.getCostoPromedio());
+        assertEquals(8500L, actualizado.getCostoPromedio());
 
         List<MovimientoInventario> movs = movimientoInventarioRepository.findByProducto_IdProductos(productoZero.getIdProductos());
         assertFalse(movs.isEmpty());
@@ -114,13 +113,13 @@ class InventarioModulo1IntegrationTest {
 
     @Test
     void registroInicial_ConStockExistente_RecalculaCPPExactamente() throws Exception {
-        // Inicial: stock = 10, cppActual = $3000.00
-        // Carga Inicial: 10 unidades a $5000.00
-        // Fórmula CPP: ((10 * 3000) + (10 * 5000)) / (10 + 10) = 80000 / 20 = $4000.00
+        // Inicial: stock = 10, cppActual = $3000
+        // Carga Inicial: 10 unidades a $5000
+        // Fórmula CPP: ((10 * 3000) + (10 * 5000)) / (10 + 10) = 80000 / 20 = $4000
         DetalleRegistroInicialRequestDTO detalle = DetalleRegistroInicialRequestDTO.builder()
-                .productoId(productoExistente.getIdProductos().longValue())
+                .productoId(productoExistente.getIdProductos())
                 .cantidad(10)
-                .costoUnitarioIngreso(new BigDecimal("5000.00"))
+                .costoUnitarioIngreso(5000L)
                 .build();
 
         RegistroInicialRequestDTO request = RegistroInicialRequestDTO.builder()
@@ -132,24 +131,24 @@ class InventarioModulo1IntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$[0].cppResultante").value(4000.00))
+                .andExpect(jsonPath("$[0].cppResultante").value(4000))
                 .andExpect(jsonPath("$[0].stockResultante").value(20));
 
         Productos actualizado = productoRepository.findById(productoExistente.getIdProductos()).orElseThrow();
         assertEquals(20, actualizado.getCantidad());
-        assertEquals(new BigDecimal("4000.00"), actualizado.getCostoPromedio());
+        assertEquals(4000L, actualizado.getCostoPromedio());
     }
 
     @Test
     void ajustePositivo_ConCostoUnitario_RecalculaCPP() throws Exception {
-        // Inicial: stock = 10, cpp = 3000.00
-        // Ajuste +: 5 unidades a $6000.00
-        // CPP: ((10 * 3000) + (5 * 6000)) / (15) = (30000 + 30000) / 15 = 60000 / 15 = $4000.00
+        // Inicial: stock = 10, cpp = 3000
+        // Ajuste +: 5 unidades a $6000
+        // CPP: ((10 * 3000) + (5 * 6000)) / (15) = (30000 + 30000) / 15 = 60000 / 15 = $4000
         AjusteStockRequestDTO dto = AjusteStockRequestDTO.builder()
-                .productoId(productoExistente.getIdProductos().longValue())
+                .productoId(productoExistente.getIdProductos())
                 .tipoAjuste(TipoAjuste.POSITIVO)
                 .cantidad(5)
-                .costoUnitarioIngreso(new BigDecimal("6000.00"))
+                .costoUnitarioIngreso(6000L)
                 .motivo("Encontrado en inventario físico")
                 .build();
 
@@ -160,11 +159,11 @@ class InventarioModulo1IntegrationTest {
                 .andExpect(jsonPath("$.tipoAjuste").value("POSITIVO"))
                 .andExpect(jsonPath("$.stockAnterior").value(10))
                 .andExpect(jsonPath("$.stockResultante").value(15))
-                .andExpect(jsonPath("$.costoPromedioResultante").value(4000.00));
+                .andExpect(jsonPath("$.costoPromedioResultante").value(4000));
 
         Productos actualizado = productoRepository.findById(productoExistente.getIdProductos()).orElseThrow();
         assertEquals(15, actualizado.getCantidad());
-        assertEquals(new BigDecimal("4000.00"), actualizado.getCostoPromedio());
+        assertEquals(4000L, actualizado.getCostoPromedio());
 
         List<AjusteInventario> ajustes = ajusteInventarioRepository.findByProducto_IdProductos(productoExistente.getIdProductos());
         assertFalse(ajustes.isEmpty());
@@ -174,7 +173,7 @@ class InventarioModulo1IntegrationTest {
     @Test
     void ajustePositivo_SinCostoUnitario_MantieneCPPAnterior() throws Exception {
         AjusteStockRequestDTO dto = AjusteStockRequestDTO.builder()
-                .productoId(productoExistente.getIdProductos().longValue())
+                .productoId(productoExistente.getIdProductos())
                 .tipoAjuste(TipoAjuste.POSITIVO)
                 .cantidad(5)
                 .costoUnitarioIngreso(null)
@@ -186,17 +185,17 @@ class InventarioModulo1IntegrationTest {
                         .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.stockResultante").value(15))
-                .andExpect(jsonPath("$.costoPromedioResultante").value(3000.00));
+                .andExpect(jsonPath("$.costoPromedioResultante").value(3000));
 
         Productos actualizado = productoRepository.findById(productoExistente.getIdProductos()).orElseThrow();
         assertEquals(15, actualizado.getCantidad());
-        assertEquals(new BigDecimal("3000.00"), actualizado.getCostoPromedio());
+        assertEquals(3000L, actualizado.getCostoPromedio());
     }
 
     @Test
     void ajusteNegativo_ConStockSuficiente_MantieneCPP() throws Exception {
         AjusteStockRequestDTO dto = AjusteStockRequestDTO.builder()
-                .productoId(productoExistente.getIdProductos().longValue())
+                .productoId(productoExistente.getIdProductos())
                 .tipoAjuste(TipoAjuste.NEGATIVO)
                 .cantidad(4)
                 .motivo("Baja por empaque dañado")
@@ -209,17 +208,17 @@ class InventarioModulo1IntegrationTest {
                 .andExpect(jsonPath("$.tipoAjuste").value("NEGATIVO"))
                 .andExpect(jsonPath("$.stockAnterior").value(10))
                 .andExpect(jsonPath("$.stockResultante").value(6))
-                .andExpect(jsonPath("$.costoPromedioResultante").value(3000.00));
+                .andExpect(jsonPath("$.costoPromedioResultante").value(3000));
 
         Productos actualizado = productoRepository.findById(productoExistente.getIdProductos()).orElseThrow();
         assertEquals(6, actualizado.getCantidad());
-        assertEquals(new BigDecimal("3000.00"), actualizado.getCostoPromedio());
+        assertEquals(3000L, actualizado.getCostoPromedio());
     }
 
     @Test
     void ajusteNegativo_ConStockInsuficiente_RetornaError() throws Exception {
         AjusteStockRequestDTO dto = AjusteStockRequestDTO.builder()
-                .productoId(productoExistente.getIdProductos().longValue())
+                .productoId(productoExistente.getIdProductos())
                 .tipoAjuste(TipoAjuste.NEGATIVO)
                 .cantidad(50) // Mayor que stock (10)
                 .motivo("Baja excesiva")
@@ -235,7 +234,7 @@ class InventarioModulo1IntegrationTest {
     void consultarAjustes_RetornaHistorial() throws Exception {
         // Registrar un ajuste primero
         AjusteStockRequestDTO dto = AjusteStockRequestDTO.builder()
-                .productoId(productoExistente.getIdProductos().longValue())
+                .productoId(productoExistente.getIdProductos())
                 .tipoAjuste(TipoAjuste.POSITIVO)
                 .cantidad(2)
                 .motivo("Ingreso extraordinario")

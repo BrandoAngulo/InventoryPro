@@ -4,11 +4,10 @@ import com.example.soft.inventoryPro.Productos.Models.Productos;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.math.BigDecimal;
-
 @Entity
 @Table(name = "detalles_pedido")
-@Data
+@Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -20,7 +19,6 @@ public class DetallePedido {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "pedido_id", nullable = false)
-    @ToString.Exclude
     private Pedido pedido;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
@@ -30,15 +28,15 @@ public class DetallePedido {
     @Column(nullable = false)
     private Integer cantidad;
 
-    @Column(name = "precio_lista", nullable = false, precision = 12, scale = 2)
-    private BigDecimal precioLista;
+    @Column(name = "precio_lista", nullable = false)
+    private Long precioLista;
 
-    @Column(name = "precio_ajustado", nullable = false, precision = 12, scale = 2)
-    private BigDecimal precioAjustado;
+    @Column(name = "precio_ajustado", nullable = false)
+    private Long precioAjustado;
 
-    @Column(name = "descuento_unitario", nullable = false, precision = 12, scale = 2)
-    private BigDecimal descuentoUnitario;
+    @Column(name = "descuento_unitario", nullable = false)
+    private Long descuentoUnitario;
 
-    @Column(name = "subtotal_renglon", nullable = false, precision = 12, scale = 2)
-    private BigDecimal subtotalRenglon;
+    @Column(name = "subtotal_renglon", nullable = false)
+    private Long subtotalRenglon;
 }

@@ -4,7 +4,6 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.*;
-import java.math.BigDecimal;
 
 @Data
 @Builder
@@ -21,5 +20,5 @@ public class DetalleRegistroInicialRequestDTO {
 
     @NotNull(message = "El costo unitario de ingreso es obligatorio")
     @PositiveOrZero(message = "El costo unitario de ingreso no puede ser negativo")
-    private BigDecimal costoUnitarioIngreso;
+    private Long costoUnitarioIngreso;
 }

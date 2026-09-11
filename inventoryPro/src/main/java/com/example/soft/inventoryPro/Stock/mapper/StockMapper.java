@@ -9,7 +9,7 @@ public class StockMapper {
         if (entity == null) return null;
         return StockResponseDTO.builder()
                 .idStock(entity.getIdStock())
-                .idProducto(entity.getProductos() != null && entity.getProductos().getIdProductos() != null ? entity.getProductos().getIdProductos().longValue() : null)
+                .idProducto(entity.getProductos() != null ? entity.getProductos().getIdProductos() : null)
                 .nombreProducto(entity.getProductos() != null ? entity.getProductos().getNombreProducto() : null)
                 .cantidadStock(entity.getCantidadStock())
                 .build();

@@ -5,7 +5,6 @@ import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -16,14 +15,13 @@ import java.util.List;
 @NoArgsConstructor
 @Builder
 @Entity
-@ToString(exclude = "detalles")
 @Table(name = "compras")
 public class Compra {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_compra")
-    private Integer idCompra;
+    private Long idCompra;
 
     @Column(name = "numero_factura_proveedor", length = 50)
     private String numeroFacturaProveedor;
@@ -31,8 +29,7 @@ public class Compra {
     @Column(name = "fecha_compra")
     private LocalDateTime fechaCompra;
 
-    @Column(precision = 12, scale = 2)
-    private BigDecimal total;
+    private Long total;
 
     @Column(length = 255)
     private String observacion;
@@ -51,9 +48,12 @@ public class Compra {
         if (this.fechaCompra == null) {
             this.fechaCompra = LocalDateTime.now();
         }
+        if (this.total == null) {
+            this.total = 0L;
+        }
     }
 
     public Long getId() {
-        return idCompra != null ? idCompra.longValue() : null;
+        return idCompra;
     }
 }

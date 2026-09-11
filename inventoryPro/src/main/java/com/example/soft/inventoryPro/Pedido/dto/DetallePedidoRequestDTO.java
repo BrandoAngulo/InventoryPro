@@ -4,7 +4,6 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.*;
-import java.math.BigDecimal;
 
 @Data
 @Builder
@@ -21,12 +20,12 @@ public class DetallePedidoRequestDTO {
 
     @NotNull(message = "El precio de lista es obligatorio")
     @PositiveOrZero(message = "El precio de lista no puede ser negativo")
-    private BigDecimal precioLista;
+    private Long precioLista;
 
     @NotNull(message = "El precio ajustado es obligatorio")
     @PositiveOrZero(message = "El precio ajustado no puede ser negativo")
-    private BigDecimal precioAjustado;
+    private Long precioAjustado;
 
     @PositiveOrZero(message = "El descuento unitario no puede ser negativo")
-    private BigDecimal descuentoUnitario;
+    private Long descuentoUnitario;
 }

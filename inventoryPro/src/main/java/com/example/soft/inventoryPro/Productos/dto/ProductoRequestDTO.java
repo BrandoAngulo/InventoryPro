@@ -5,7 +5,6 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
-import java.math.BigDecimal;
 import lombok.*;
 
 @Data
@@ -27,7 +26,7 @@ public class ProductoRequestDTO {
 
     @NotNull(message = "El precio de venta es obligatorio")
     @Positive(message = "El precio de venta debe ser un número positivo mayores a 0")
-    private BigDecimal precioVenta;
+    private Long precioVenta;
 
     @NotNull(message = "La categoría es obligatoria")
     @Positive(message = "El ID de categoría debe ser válido")
@@ -44,5 +43,5 @@ public class ProductoRequestDTO {
     @Min(value = 0, message = "El stock inicial no puede ser negativo")
     private Integer stockInicial;
 
-    private BigDecimal costoInicial;
+    private Long costoInicial;
 }

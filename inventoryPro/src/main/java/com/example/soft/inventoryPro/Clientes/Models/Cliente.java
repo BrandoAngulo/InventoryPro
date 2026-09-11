@@ -16,42 +16,31 @@ import java.util.List;
 public class Cliente {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    Integer idCliente;
+    private Long idCliente;
 
+    private Integer documento;
 
-    Integer documento;
+    private String nombre;
 
-    String nombre;
+    private String apellido;
 
+    private String direccion;
 
-    String apellido;
+    private String correo;
 
+    private String celular;
 
-    String direccion;
-
-
-    String correo;
-
-
-    String celular;
-
-    String estado;
+    private String estado;
 
     @Transient
     @OneToMany(mappedBy = "clientes", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Ventas> ventas;
 
-
-
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinTable(name = "cliente_usuario",
             joinColumns = @JoinColumn(
                     name = "cliente_id"
             ), inverseJoinColumns = @JoinColumn(name = "usuario_id")
-
-
     )
     private Usuario usuario;
-
-
 }

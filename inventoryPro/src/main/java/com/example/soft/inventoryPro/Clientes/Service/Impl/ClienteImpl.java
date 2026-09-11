@@ -6,12 +6,12 @@ import com.example.soft.inventoryPro.Clientes.Service.ClienteService;
 import com.example.soft.inventoryPro.Clientes.dto.ClienteRequestDTO;
 import com.example.soft.inventoryPro.Clientes.dto.ClienteResponseDTO;
 import com.example.soft.inventoryPro.Clientes.mapper.ClienteMapper;
+import com.example.soft.inventoryPro.common.exception.BusinessRuleException;
+import com.example.soft.inventoryPro.common.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -30,7 +30,7 @@ public class ClienteImpl implements ClienteService {
             try {
                 Integer docInt = Integer.parseInt(dto.getDocumento());
                 clienteRepository.findClienteByDocumento(docInt).ifPresent(c -> {
-                    throw new ResponseStatusException(HttpStatus.CONFLICT, "El cliente ya existe con el documento: " + dto.getDocumento());
+                    throw new BusinessRuleException("El cliente ya existe con el documento: " + dto.getDocumento());
                 });
             } catch (NumberFormatException ignored) {
             }
@@ -53,16 +53,16 @@ public class ClienteImpl implements ClienteService {
     @Override
     @Transactional(readOnly = true)
     public ClienteResponseDTO traerClienteId(Long id) {
-        Cliente cliente = clienteRepository.findById(id.intValue())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "El cliente no existe con ID: " + id));
+        Cliente cliente = clienteRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("El cliente no existe con ID: " + id));
         return clienteMapper.toDto(cliente);
     }
 
     @Override
     @Transactional
     public ClienteResponseDTO actualizarCliente(Long id, ClienteRequestDTO dto) {
-        Cliente cliente = clienteRepository.findById(id.intValue())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "El cliente no existe con ID: " + id));
+        Cliente cliente = clienteRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("El cliente no existe con ID: " + id));
         clienteMapper.updateEntityFromDto(dto, cliente);
         Cliente actualizado = clienteRepository.save(cliente);
         return clienteMapper.toDto(actualizado);
@@ -71,8 +71,8 @@ public class ClienteImpl implements ClienteService {
     @Override
     @Transactional
     public ClienteResponseDTO cambiarEstado(Long id) {
-        Cliente cliente = clienteRepository.findById(id.intValue())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "El cliente no existe con ID: " + id));
+        Cliente cliente = clienteRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("El cliente no existe con ID: " + id));
 
         boolean esActivo = cliente.getEstado() != null &&
                 ("ACTIVO".equalsIgnoreCase(cliente.getEstado()) || "A".equalsIgnoreCase(cliente.getEstado()));

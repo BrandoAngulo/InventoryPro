@@ -4,11 +4,10 @@ import com.example.soft.inventoryPro.Productos.Models.Productos;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.math.BigDecimal;
-
 @Entity
 @Table(name = "detalles_factura")
-@Data
+@Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -20,7 +19,6 @@ public class DetalleFactura {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "factura_id", nullable = false)
-    @ToString.Exclude
     private Factura factura;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
@@ -30,12 +28,12 @@ public class DetalleFactura {
     @Column(nullable = false)
     private Integer cantidad;
 
-    @Column(name = "precio_unitario", nullable = false, precision = 12, scale = 2)
-    private BigDecimal precioUnitario;
+    @Column(name = "precio_unitario", nullable = false)
+    private Long precioUnitario;
 
-    @Column(name = "costo_unitario", nullable = false, precision = 12, scale = 2)
-    private BigDecimal costoUnitario;
+    @Column(name = "costo_unitario", nullable = false)
+    private Long costoUnitario;
 
-    @Column(nullable = false, precision = 12, scale = 2)
-    private BigDecimal subtotal;
+    @Column(nullable = false)
+    private Long subtotal;
 }

@@ -1,7 +1,7 @@
 package com.example.soft.inventoryPro.Inventario.dto;
 
 import lombok.*;
-import java.math.BigDecimal;
+
 import java.time.LocalDateTime;
 
 @Data
@@ -15,8 +15,8 @@ public class RegistroInicialResponseDTO {
     private Integer stockAnterior;
     private Integer cantidadIngresada;
     private Integer stockResultante;
-    private BigDecimal costoIngreso;
-    private BigDecimal cppAnterior;
-    private BigDecimal cppResultante;
+    private Long costoIngreso;
+    private Long cppAnterior;
+    private Long cppResultante;
     private LocalDateTime fecha;
 }

@@ -12,19 +12,16 @@ import java.util.Set;
 @NoArgsConstructor
 @Builder
 @Entity
-@ToString
 public class Bodega {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    Integer idBodega;
+    private Long idBodega;
 
+    private String nombre;
 
-    String nombre;
-
-    String fechaCreacionBodega;
-
+    private String fechaCreacionBodega;
 
     @Transient
-    @ManyToMany(mappedBy = "Bodega")
+    @ManyToMany(mappedBy = "Bodega", fetch = FetchType.LAZY)
     private Set<Productos> productosSet;
 }

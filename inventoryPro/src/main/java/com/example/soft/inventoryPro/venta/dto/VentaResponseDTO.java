@@ -10,12 +10,12 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class VentaResponseDTO {
-    private Integer idVentas;
+    private Long idVentas;
     private LocalDate fecha;
-    private Integer total;
+    private Long total;
     private Long idCliente;
     private String nombreCliente;
-    private Integer idUsuario;
+    private Long idUsuario;
     private String nombreUsuario;
     private List<DetalleVentaResponseDTO> detalles;
 }

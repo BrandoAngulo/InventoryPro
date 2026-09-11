@@ -1,30 +1,41 @@
-# Stage 1: Build stage
+# ==========================================
+# Stage 1: Build stage (Java 21 + Maven Multi-stage)
+# ==========================================
 FROM maven:3.9.9-eclipse-temurin-21-alpine AS build
+
 WORKDIR /app
 
-# Copy Maven dependency definitions and download dependencies to optimize caching
+# Copiar manifiestos Maven y wrappers
 COPY pom.xml .
 COPY .mvn .mvn
-COPY mvnw .
-RUN ./mvnw dependency:go-offline -B || mvn dependency:go-offline -B
+COPY mvnw mvnw.cmd ./
 
-# Copy source code and build the application executable JAR
+# Asegurar saltos de línea LF en mvnw y dar permisos de ejecución
+RUN sed -i 's/\r$//' mvnw && chmod +x mvnw
+
+# Descargar dependencias para optimizar la caché de capas
+RUN ./mvnw dependency:go-offline -B || mvn dependency:go-offline -B || true
+
+# Copiar código fuente y construir el ejecutable JAR
 COPY src ./src
 RUN ./mvnw clean package -DskipTests || mvn clean package -DskipTests
 
-# Stage 2: Production runtime stage
-FROM eclipse-temurin:21-jre-alpine
+# ==========================================
+# Stage 2: Production runtime stage (JRE 21 Alpine)
+# ==========================================
+FROM eclipse-temurin:21-jre-alpine AS runner
+
 WORKDIR /app
 
-# Create a non-root user and group for enhanced security
+# Crear usuario y grupo no-root por seguridad
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 USER appuser:appgroup
 
-# Copy compiled JAR artifact from build stage
+# Copiar el artefacto JAR compilado desde la etapa de build
 COPY --from=build /app/target/*.jar app.jar
 
-# Expose default application port
+# Exponer el puerto por defecto de Spring Boot
 EXPOSE 8080
 
-# Configure container execution
+# Ejecución del contenedor
 ENTRYPOINT ["java", "-jar", "app.jar"]

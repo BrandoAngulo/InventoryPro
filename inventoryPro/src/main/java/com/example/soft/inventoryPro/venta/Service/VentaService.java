@@ -7,6 +7,6 @@ import java.util.List;
 
 public interface VentaService {
     VentaResponseDTO registrarVentas(VentaRequestDTO dto);
-    VentaResponseDTO listarVentas(Integer idVentas);
+    VentaResponseDTO listarVentas(Long idVentas);
     List<VentaResponseDTO> listarTodasVentas();
 }

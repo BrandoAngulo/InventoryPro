@@ -8,5 +8,5 @@ import java.util.List;
 public interface UsuarioService {
     UsuarioResponseDTO registrarUsuario(UsuarioRequestDTO dto);
     List<UsuarioResponseDTO> listarUsuarios();
-    UsuarioResponseDTO obtenerPorId(Integer id);
+    UsuarioResponseDTO obtenerPorId(Long id);
 }

@@ -1,7 +1,6 @@
 package com.example.soft.inventoryPro.Compra.dto;
 
 import lombok.*;
-import java.math.BigDecimal;
 
 @Data
 @Builder
@@ -13,8 +12,8 @@ public class DetalleCompraResponseDTO {
     private String productoCodigo;
     private String productoNombre;
     private Integer cantidad;
-    private BigDecimal precioUnitario;
-    private BigDecimal subtotal;
+    private Long precioUnitario;
+    private Long subtotal;
 
     public Long getIdDetalleCompra() {
         return id;
@@ -24,11 +23,11 @@ public class DetalleCompraResponseDTO {
         return productoId;
     }
 
-    public String getNombreProducto() {
+    public String getNombreProveedor() {
         return productoNombre;
     }
 
-    public Double getPrecioCompra() {
-        return precioUnitario != null ? precioUnitario.doubleValue() : null;
+    public Long getPrecioCompra() {
+        return precioUnitario;
     }
 }

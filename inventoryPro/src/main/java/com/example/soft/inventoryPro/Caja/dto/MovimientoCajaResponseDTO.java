@@ -1,7 +1,7 @@
 package com.example.soft.inventoryPro.Caja.dto;
 
 import lombok.*;
-import java.math.BigDecimal;
+
 import java.time.LocalDateTime;
 
 @Data
@@ -12,7 +12,7 @@ public class MovimientoCajaResponseDTO {
     private Long id;
     private Long cajaId;
     private String tipo;
-    private BigDecimal monto;
+    private Long monto;
     private String concepto;
     private Long facturaId;
     private LocalDateTime fecha;

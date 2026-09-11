@@ -7,7 +7,7 @@ import java.util.List;
 
 public interface StockService {
     StockResponseDTO registrarStockProducto(StockRequestDTO dto);
-    StockResponseDTO actualizarStock(Integer id, StockRequestDTO dto);
-    StockResponseDTO finByIdStock(Integer idStock);
+    StockResponseDTO actualizarStock(Long id, StockRequestDTO dto);
+    StockResponseDTO finByIdStock(Long idStock);
     List<StockResponseDTO> findByAllStock();
 }

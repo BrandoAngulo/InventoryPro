@@ -31,13 +31,13 @@ public class BodegaController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<BodegaResponseDTO> listarBodega(@PathVariable Integer id) {
+    public ResponseEntity<BodegaResponseDTO> listarBodega(@PathVariable Long id) {
         BodegaResponseDTO bodega = bodegaService.traerIdBoderga(id);
         return ResponseEntity.ok(bodega);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<BodegaResponseDTO> actualizarBodega(@PathVariable Integer id, @Valid @RequestBody BodegaRequestDTO dto) {
+    public ResponseEntity<BodegaResponseDTO> actualizarBodega(@PathVariable Long id, @Valid @RequestBody BodegaRequestDTO dto) {
         BodegaResponseDTO bodegaActualizada = bodegaService.actualizarBodega(id, dto);
         return ResponseEntity.ok(bodegaActualizada);
     }

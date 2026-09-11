@@ -4,14 +4,14 @@ import com.example.soft.inventoryPro.Clientes.Models.Cliente;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 @Entity
 @Table(name = "facturas")
-@Data
+@Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -28,14 +28,14 @@ public class Factura {
     @JoinColumn(name = "cliente_id", nullable = false)
     private Cliente cliente;
 
-    @Column(nullable = false, precision = 12, scale = 2)
-    private BigDecimal subtotal;
+    @Column(nullable = false)
+    private Long subtotal;
 
-    @Column(nullable = false, precision = 12, scale = 2)
-    private BigDecimal impuesto;
+    @Column(nullable = false)
+    private Long impuesto;
 
-    @Column(nullable = false, precision = 12, scale = 2)
-    private BigDecimal total;
+    @Column(nullable = false)
+    private Long total;
 
     @Column(name = "forma_pago", nullable = false, length = 20)
     private String formaPago;
@@ -49,8 +49,10 @@ public class Factura {
     @Column(length = 255)
     private String observacion;
 
+    @Version
+    private Long version;
+
     @OneToMany(mappedBy = "factura", cascade = CascadeType.ALL, orphanRemoval = true)
-    @ToString.Exclude
     @Builder.Default
     private List<DetalleFactura> detalles = new ArrayList<>();
 
@@ -63,7 +65,13 @@ public class Factura {
             this.estado = "PAGADA";
         }
         if (this.impuesto == null) {
-            this.impuesto = BigDecimal.ZERO;
+            this.impuesto = 0L;
+        }
+        if (this.subtotal == null) {
+            this.subtotal = 0L;
+        }
+        if (this.total == null) {
+            this.total = 0L;
         }
     }
 }

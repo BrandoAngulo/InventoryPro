@@ -4,7 +4,6 @@ import com.example.soft.inventoryPro.Productos.Models.Productos;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.LocalDate;
 import java.util.Set;
 
 @Getter
@@ -13,13 +12,11 @@ import java.util.Set;
 @NoArgsConstructor
 @Builder
 @Entity
-@ToString
 public class Proovedor {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer idProovedor;
-
+    private Long idProovedor;
 
     private String nombreProovedor;
 
@@ -35,8 +32,7 @@ public class Proovedor {
 
     private Boolean estado;
 
-    @ManyToMany(mappedBy = "proveedores")
+    @ManyToMany(mappedBy = "proveedores", fetch = FetchType.LAZY)
     @Transient
     private Set<Productos> productos;
-
 }

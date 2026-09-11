@@ -7,7 +7,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 public class BodegaResponseDTO {
-    private Integer idBodega;
+    private Long idBodega;
     private String nombre;
     private String fechaCreacionBodega;
 }

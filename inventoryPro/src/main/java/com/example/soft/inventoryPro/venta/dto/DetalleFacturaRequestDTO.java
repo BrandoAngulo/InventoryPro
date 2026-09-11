@@ -3,7 +3,6 @@ package com.example.soft.inventoryPro.venta.dto;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.*;
-import java.math.BigDecimal;
 
 @Data
 @Builder
@@ -20,5 +19,5 @@ public class DetalleFacturaRequestDTO {
 
     @NotNull(message = "El precio unitario de venta es obligatorio")
     @Positive(message = "El precio unitario debe ser positivo")
-    private BigDecimal precioUnitario;
+    private Long precioUnitario;
 }

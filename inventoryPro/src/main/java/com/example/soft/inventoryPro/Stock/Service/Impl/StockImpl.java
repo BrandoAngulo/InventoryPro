@@ -8,12 +8,14 @@ import com.example.soft.inventoryPro.Stock.Service.StockService;
 import com.example.soft.inventoryPro.Stock.dto.StockRequestDTO;
 import com.example.soft.inventoryPro.Stock.dto.StockResponseDTO;
 import com.example.soft.inventoryPro.Stock.mapper.StockMapper;
+import com.example.soft.inventoryPro.common.exception.BusinessRuleException;
+import com.example.soft.inventoryPro.common.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -27,13 +29,14 @@ public class StockImpl implements StockService {
     private final ProductoRepository productosRepository;
 
     @Override
+    @Transactional
     public StockResponseDTO registrarStockProducto(StockRequestDTO dto) {
-        Productos productos = productosRepository.findById(dto.getIdProducto().intValue())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Producto no encontrado con ID: " + dto.getIdProducto()));
+        Productos productos = productosRepository.findById(dto.getIdProducto())
+                .orElseThrow(() -> new ResourceNotFoundException("Producto no encontrado con ID: " + dto.getIdProducto()));
 
         Optional<Stock> stockExistente = stockRepository.findByProductos_IdProductos(productos.getIdProductos());
         if (stockExistente.isPresent()) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Ya existe un stock registrado para el producto con ID: " + productos.getIdProductos());
+            throw new BusinessRuleException("Ya existe un stock registrado para el producto con ID: " + productos.getIdProductos());
         }
 
         Stock stock = Stock.builder()
@@ -46,13 +49,14 @@ public class StockImpl implements StockService {
     }
 
     @Override
-    public StockResponseDTO actualizarStock(Integer id, StockRequestDTO dto) {
+    @Transactional
+    public StockResponseDTO actualizarStock(Long id, StockRequestDTO dto) {
         Stock stockExistente = stockRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Stock no encontrado con ID: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Stock no encontrado con ID: " + id));
 
         if (dto.getIdProducto() != null) {
-            Productos productos = productosRepository.findById(dto.getIdProducto().intValue())
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Producto no encontrado con ID: " + dto.getIdProducto()));
+            Productos productos = productosRepository.findById(dto.getIdProducto())
+                    .orElseThrow(() -> new ResourceNotFoundException("Producto no encontrado con ID: " + dto.getIdProducto()));
             stockExistente.setProductos(productos);
         }
 
@@ -62,17 +66,19 @@ public class StockImpl implements StockService {
     }
 
     @Override
-    public StockResponseDTO finByIdStock(Integer idStock) {
+    @Transactional(readOnly = true)
+    public StockResponseDTO finByIdStock(Long idStock) {
         Stock stock = stockRepository.findById(idStock)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Stock no encontrado con ID: " + idStock));
+                .orElseThrow(() -> new ResourceNotFoundException("Stock no encontrado con ID: " + idStock));
         return StockMapper.toDTO(stock);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<StockResponseDTO> findByAllStock() {
         List<Stock> stockList = stockRepository.findAll();
         if (stockList.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "La lista está vacía");
+            return Collections.emptyList();
         }
         return stockList.stream().map(StockMapper::toDTO).collect(Collectors.toList());
     }

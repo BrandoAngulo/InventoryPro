@@ -5,7 +5,6 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
 import lombok.*;
-import java.math.BigDecimal;
 import java.util.List;
 
 @Data
@@ -18,10 +17,10 @@ public class PedidoRequestDTO {
     private Long clienteId;
 
     @PositiveOrZero(message = "El descuento general no puede ser negativo")
-    private BigDecimal descuentoGeneral;
+    private Long descuentoGeneral;
 
     @PositiveOrZero(message = "El impuesto no puede ser negativo")
-    private BigDecimal impuesto;
+    private Long impuesto;
 
     @Size(max = 255, message = "La observación no debe superar 255 caracteres")
     private String observacion;

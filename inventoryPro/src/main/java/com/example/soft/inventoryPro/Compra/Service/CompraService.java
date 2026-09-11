@@ -7,7 +7,7 @@ import java.util.List;
 
 public interface CompraService {
     CompraResponseDTO registrarCompra(CompraRequestDTO dto);
-    CompraResponseDTO findByIdCompra(Integer id);
+    CompraResponseDTO findByIdCompra(Long id);
     List<CompraResponseDTO> findByAllCompra();
     List<CompraResponseDTO> listarUltimasCompras(int limite);
 }

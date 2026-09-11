@@ -6,11 +6,11 @@ import com.example.soft.inventoryPro.Bodega.Service.BodegaService;
 import com.example.soft.inventoryPro.Bodega.dto.BodegaRequestDTO;
 import com.example.soft.inventoryPro.Bodega.dto.BodegaResponseDTO;
 import com.example.soft.inventoryPro.Bodega.mapper.BodegaMapper;
+import com.example.soft.inventoryPro.common.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -23,6 +23,7 @@ public class BodegaServiceImpl implements BodegaService {
     private final BodegaRepository bodegaRepository;
 
     @Override
+    @Transactional
     public BodegaResponseDTO registrarBodega(BodegaRequestDTO dto) {
         Bodega bodega = BodegaMapper.toEntity(dto);
         Bodega guardada = bodegaRepository.save(bodega);
@@ -30,6 +31,7 @@ public class BodegaServiceImpl implements BodegaService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<BodegaResponseDTO> traerTodasBoderga() {
         return bodegaRepository.findAll().stream()
                 .map(BodegaMapper::toDTO)
@@ -37,9 +39,10 @@ public class BodegaServiceImpl implements BodegaService {
     }
 
     @Override
-    public BodegaResponseDTO actualizarBodega(Integer id, BodegaRequestDTO dto) {
+    @Transactional
+    public BodegaResponseDTO actualizarBodega(Long id, BodegaRequestDTO dto) {
         Bodega bodegaExistente = bodegaRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Bodega no encontrada con ID: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Bodega no encontrada con ID: " + id));
 
         bodegaExistente.setNombre(dto.getNombre());
         if (dto.getFechaCreacionBodega() != null) {
@@ -51,9 +54,10 @@ public class BodegaServiceImpl implements BodegaService {
     }
 
     @Override
-    public BodegaResponseDTO traerIdBoderga(Integer id) {
+    @Transactional(readOnly = true)
+    public BodegaResponseDTO traerIdBoderga(Long id) {
         Bodega bodega = bodegaRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Bodega no encontrada con ID: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Bodega no encontrada con ID: " + id));
         return BodegaMapper.toDTO(bodega);
     }
 }

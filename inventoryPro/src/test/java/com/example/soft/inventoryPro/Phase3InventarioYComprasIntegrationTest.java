@@ -20,7 +20,6 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 import static org.hamcrest.Matchers.*;
@@ -63,9 +62,9 @@ class Phase3InventarioYComprasIntegrationTest {
         producto = productoRepository.save(Productos.builder()
                 .codigo("PROD-001")
                 .nombreProducto("Arroz Roa 1Kg")
-                .precioCompra(100)
-                .precioVenta(250)
-                .costoPromedio(new BigDecimal("100.00"))
+                .precioCompra(100L)
+                .precioVenta(250L)
+                .costoPromedio(100L)
                 .cantidad(10)
                 .stockMinimo(5)
                 .activo(true)
@@ -74,17 +73,17 @@ class Phase3InventarioYComprasIntegrationTest {
 
     @Test
     void registrarCompra_RecalculaCPPYActualizaStockYKardex() throws Exception {
-        // Inicial: stock = 10, cppActual = $100.00
-        // Compra: 10 unidades a $200.00
-        // Fórmula CPP: ((10 * 100) + (10 * 200)) / (10 + 10) = 3000 / 20 = $150.00
+        // Inicial: stock = 10, cppActual = $100
+        // Compra: 10 unidades a $200
+        // Fórmula CPP: ((10 * 100) + (10 * 200)) / (10 + 10) = 3000 / 20 = $150
         DetalleCompraRequestDTO detalleDTO = DetalleCompraRequestDTO.builder()
-                .productoId(producto.getIdProductos().longValue())
+                .productoId(producto.getIdProductos())
                 .cantidad(10)
-                .precioUnitario(new BigDecimal("200.00"))
+                .precioUnitario(200L)
                 .build();
 
         CompraRequestDTO dto = CompraRequestDTO.builder()
-                .proveedorId(proveedor.getIdProovedor().longValue())
+                .proveedorId(proveedor.getIdProovedor())
                 .numeroFacturaProveedor("FAC-PROV-1001")
                 .observacion("Compra inicial de stock")
                 .detalles(List.of(detalleDTO))
@@ -95,14 +94,14 @@ class Phase3InventarioYComprasIntegrationTest {
                         .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").exists())
-                .andExpect(jsonPath("$.total").value(2000.0))
+                .andExpect(jsonPath("$.total").value(2000))
                 .andExpect(jsonPath("$.proveedorNombre").value("Distribuidora Santander"))
                 .andExpect(jsonPath("$.detalles", hasSize(1)));
 
         // Verificación en BD del producto actualizado
         Productos productoActualizado = productoRepository.findById(producto.getIdProductos()).orElseThrow();
         assertEquals(20, productoActualizado.getCantidad(), "El stock actual debe ser 10 + 10 = 20");
-        assertEquals(new BigDecimal("150.00"), productoActualizado.getCostoPromedio(), "El nuevo CPP debe ser 150.00");
+        assertEquals(150L, productoActualizado.getCostoPromedio(), "El nuevo CPP debe ser 150");
 
         // Verificación de Kardex (MovimientoInventario)
         List<MovimientoInventario> movimientos = movimientoInventarioRepository.findByProducto_IdProductos(producto.getIdProductos());
@@ -110,8 +109,8 @@ class Phase3InventarioYComprasIntegrationTest {
         MovimientoInventario mov = movimientos.get(0);
         assertEquals(TipoMovimiento.COMPRA, mov.getTipoMovimiento());
         assertEquals(10, mov.getCantidad());
-        assertEquals(new BigDecimal("200.00"), mov.getPrecioUnitario());
-        assertEquals(new BigDecimal("150.00"), mov.getCostoUnitario());
+        assertEquals(200L, mov.getPrecioUnitario());
+        assertEquals(150L, mov.getCostoUnitario());
     }
 
     @Test

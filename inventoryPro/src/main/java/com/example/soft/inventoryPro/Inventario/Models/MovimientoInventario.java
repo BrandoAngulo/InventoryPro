@@ -4,12 +4,12 @@ import com.example.soft.inventoryPro.Productos.Models.Productos;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "movimientos_inventario")
-@Data
+@Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -30,11 +30,11 @@ public class MovimientoInventario {
     @Column(nullable = false)
     private Integer cantidad;
 
-    @Column(name = "precio_unitario", nullable = false, precision = 12, scale = 2)
-    private BigDecimal precioUnitario;
+    @Column(name = "precio_unitario", nullable = false)
+    private Long precioUnitario;
 
-    @Column(name = "costo_unitario", nullable = false, precision = 12, scale = 2)
-    private BigDecimal costoUnitario;
+    @Column(name = "costo_unitario", nullable = false)
+    private Long costoUnitario;
 
     @Column(nullable = false)
     private LocalDateTime fecha;

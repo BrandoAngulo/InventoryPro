@@ -14,19 +14,18 @@ import java.util.Set;
 @NoArgsConstructor
 @Builder
 @Entity
-@ToString
 public class Categoria {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    Integer idCategoria;
+    private Long idCategoria;
 
+    private String nombreCategoria;
 
-    String nombreCategoria;
+    private String descripcion;
 
-    String descripcion;
-
-    @ManyToMany(mappedBy = "categorias")
+    @ManyToMany(mappedBy = "categorias", fetch = FetchType.LAZY)
     @JsonIgnore
+    @Builder.Default
     private Set<Productos> productos = new HashSet<>();
 
     public String getNombre() {

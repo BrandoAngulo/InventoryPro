@@ -3,12 +3,12 @@ package com.example.soft.inventoryPro.Caja.Models;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "cajas")
-@Data
+@Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -18,23 +18,22 @@ public class Caja {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "monto_inicial", nullable = false, precision = 12, scale = 2)
-    private BigDecimal montoInicial;
+    @Column(name = "monto_inicial", nullable = false)
+    private Long montoInicial;
 
-    @Column(name = "monto_ingresos", nullable = false, precision = 12, scale = 2)
-    private BigDecimal montoIngresos;
+    @Column(name = "monto_ingresos", nullable = false)
+    private Long montoIngresos;
 
-    @Column(name = "monto_egresos", nullable = false, precision = 12, scale = 2)
-    private BigDecimal montoEgresos;
+    @Column(name = "monto_egresos", nullable = false)
+    private Long montoEgresos;
 
-    @Column(name = "monto_esperado", nullable = false, precision = 12, scale = 2)
-    private BigDecimal montoEsperado;
+    @Column(name = "monto_esperado", nullable = false)
+    private Long montoEsperado;
 
-    @Column(name = "monto_cierre", precision = 12, scale = 2)
-    private BigDecimal montoCierre;
+    @Column(name = "monto_cierre")
+    private Long montoCierre;
 
-    @Column(precision = 12, scale = 2)
-    private BigDecimal diferencia;
+    private Long diferencia;
 
     @Column(nullable = false, length = 20)
     private String estado; // ABIERTA, CERRADA
@@ -51,6 +50,9 @@ public class Caja {
     @Column(name = "observacion_cierre", length = 255)
     private String observacionCierre;
 
+    @Version
+    private Long version;
+
     @PrePersist
     public void prePersist() {
         if (this.fechaApertura == null) {
@@ -60,13 +62,13 @@ public class Caja {
             this.estado = "ABIERTA";
         }
         if (this.montoIngresos == null) {
-            this.montoIngresos = BigDecimal.ZERO;
+            this.montoIngresos = 0L;
         }
         if (this.montoEgresos == null) {
-            this.montoEgresos = BigDecimal.ZERO;
+            this.montoEgresos = 0L;
         }
         if (this.montoEsperado == null) {
-            this.montoEsperado = this.montoInicial != null ? this.montoInicial : BigDecimal.ZERO;
+            this.montoEsperado = this.montoInicial != null ? this.montoInicial : 0L;
         }
     }
 }

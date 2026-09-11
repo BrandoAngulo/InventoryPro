@@ -6,12 +6,11 @@ import com.example.soft.inventoryPro.Categoria.Service.CategoriaService;
 import com.example.soft.inventoryPro.Categoria.dto.CategoriaRequestDTO;
 import com.example.soft.inventoryPro.Categoria.dto.CategoriaResponseDTO;
 import com.example.soft.inventoryPro.Categoria.mapper.CategoriaMapper;
+import com.example.soft.inventoryPro.common.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -34,8 +33,8 @@ public class CategoriasImpl implements CategoriaService {
     @Override
     @Transactional
     public CategoriaResponseDTO actualizarCategoria(Long id, CategoriaRequestDTO dto) {
-        Categoria categoria = categoriaRepository.findById(id.intValue())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Categoría no encontrada con ID: " + id));
+        Categoria categoria = categoriaRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Categoría no encontrada con ID: " + id));
 
         categoriaMapper.updateEntityFromDto(dto, categoria);
         Categoria actualizada = categoriaRepository.save(categoria);
@@ -45,17 +44,17 @@ public class CategoriasImpl implements CategoriaService {
     @Override
     @Transactional
     public void eliminarCategoria(Long id) {
-        if (!categoriaRepository.existsById(id.intValue())) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Categoría no encontrada con ID: " + id);
+        if (!categoriaRepository.existsById(id)) {
+            throw new ResourceNotFoundException("Categoría no encontrada con ID: " + id);
         }
-        categoriaRepository.deleteById(id.intValue());
+        categoriaRepository.deleteById(id);
     }
 
     @Override
     @Transactional(readOnly = true)
     public CategoriaResponseDTO findByIdCategoria(Long id) {
-        Categoria categoria = categoriaRepository.findById(id.intValue())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Categoría no encontrada con ID: " + id));
+        Categoria categoria = categoriaRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Categoría no encontrada con ID: " + id));
         return categoriaMapper.toDto(categoria);
     }
 

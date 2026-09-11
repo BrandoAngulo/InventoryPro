@@ -6,6 +6,8 @@ import com.example.soft.inventoryPro.Proovedor.Service.ProovedorService;
 import com.example.soft.inventoryPro.Proovedor.dto.ProveedorRequestDTO;
 import com.example.soft.inventoryPro.Proovedor.dto.ProveedorResponseDTO;
 import com.example.soft.inventoryPro.Proovedor.mapper.ProveedorMapper;
+import com.example.soft.inventoryPro.common.exception.BusinessRuleException;
+import com.example.soft.inventoryPro.common.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -39,11 +41,11 @@ public class ProovedorImpl implements ProovedorService {
     @Override
     @Transactional
     public ProveedorResponseDTO actualizarProovedor(Long id, ProveedorRequestDTO dto) {
-        Proovedor proovedor = proovedorRepository.findById(id.intValue())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Proveedor no encontrado con ID: " + id));
+        Proovedor proovedor = proovedorRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Proveedor no encontrado con ID: " + id));
 
         if (dto.getDocumento() != null && !dto.getDocumento().isBlank()) {
-            if (proovedorRepository.existsByDocumentoAndIdProovedorNot(dto.getDocumento(), id.intValue())) {
+            if (proovedorRepository.existsByDocumentoAndIdProovedorNot(dto.getDocumento(), id)) {
                 throw new ResponseStatusException(HttpStatus.CONFLICT, "Ya existe otro proveedor registrado con el documento/NIT: " + dto.getDocumento());
             }
         }
@@ -56,8 +58,8 @@ public class ProovedorImpl implements ProovedorService {
     @Override
     @Transactional
     public void eliminarProovedor(Long id) {
-        Proovedor proovedor = proovedorRepository.findById(id.intValue())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Proveedor no encontrado con ID: " + id));
+        Proovedor proovedor = proovedorRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Proveedor no encontrado con ID: " + id));
         proovedor.setEstado(false);
         proovedorRepository.save(proovedor);
     }
@@ -65,8 +67,8 @@ public class ProovedorImpl implements ProovedorService {
     @Override
     @Transactional(readOnly = true)
     public ProveedorResponseDTO findByIdProovedor(Long id) {
-        Proovedor proovedor = proovedorRepository.findById(id.intValue())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Proveedor no encontrado con ID: " + id));
+        Proovedor proovedor = proovedorRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Proveedor no encontrado con ID: " + id));
         return proveedorMapper.toDto(proovedor);
     }
 
@@ -82,8 +84,8 @@ public class ProovedorImpl implements ProovedorService {
     @Override
     @Transactional
     public ProveedorResponseDTO cambiarEstado(Long id) {
-        Proovedor proovedor = proovedorRepository.findById(id.intValue())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Proveedor no encontrado con ID: " + id));
+        Proovedor proovedor = proovedorRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Proveedor no encontrado con ID: " + id));
 
         boolean actual = proovedor.getEstado() != null ? proovedor.getEstado() : true;
         proovedor.setEstado(!actual);

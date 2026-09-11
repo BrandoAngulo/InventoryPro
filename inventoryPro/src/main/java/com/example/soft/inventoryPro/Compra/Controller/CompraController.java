@@ -31,7 +31,7 @@ public class CompraController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<CompraResponseDTO> findByIdCompra(@PathVariable Integer id) {
+    public ResponseEntity<CompraResponseDTO> findByIdCompra(@PathVariable Long id) {
         CompraResponseDTO compra = compraService.findByIdCompra(id);
         return ResponseEntity.ok(compra);
     }

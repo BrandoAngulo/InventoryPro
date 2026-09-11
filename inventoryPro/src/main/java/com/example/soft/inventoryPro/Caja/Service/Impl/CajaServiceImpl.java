@@ -6,13 +6,12 @@ import com.example.soft.inventoryPro.Caja.Repository.CajaRepository;
 import com.example.soft.inventoryPro.Caja.Repository.MovimientoCajaRepository;
 import com.example.soft.inventoryPro.Caja.Service.CajaService;
 import com.example.soft.inventoryPro.Caja.dto.*;
+import com.example.soft.inventoryPro.common.exception.BusinessRuleException;
+import com.example.soft.inventoryPro.common.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -28,15 +27,15 @@ public class CajaServiceImpl implements CajaService {
     @Transactional
     public CajaResponseDTO abrirCaja(AperturaCajaRequestDTO dto) {
         if (cajaRepository.findByEstado("ABIERTA").isPresent()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Ya existe una sesión de caja abierta");
+            throw new BusinessRuleException("Ya existe una sesión de caja abierta");
         }
 
-        BigDecimal inicial = dto.getMontoInicial() != null ? dto.getMontoInicial() : BigDecimal.ZERO;
+        Long inicial = dto.getMontoInicial() != null ? dto.getMontoInicial() : 0L;
 
         Caja caja = Caja.builder()
                 .montoInicial(inicial)
-                .montoIngresos(BigDecimal.ZERO)
-                .montoEgresos(BigDecimal.ZERO)
+                .montoIngresos(0L)
+                .montoEgresos(0L)
                 .montoEsperado(inicial)
                 .estado("ABIERTA")
                 .fechaApertura(LocalDateTime.now())
@@ -51,7 +50,7 @@ public class CajaServiceImpl implements CajaService {
     @Transactional(readOnly = true)
     public CajaResponseDTO getCajaActual() {
         Caja caja = cajaRepository.findByEstado("ABIERTA")
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No existe una caja abierta en este momento"));
+                .orElseThrow(() -> new ResourceNotFoundException("No existe una caja abierta en este momento"));
         return toCajaResponseDTO(caja);
     }
 
@@ -59,20 +58,22 @@ public class CajaServiceImpl implements CajaService {
     @Transactional
     public MovimientoCajaResponseDTO registrarMovimiento(MovimientoCajaRequestDTO dto) {
         Caja caja = cajaRepository.findByEstado("ABIERTA")
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "No hay una caja abierta para registrar movimientos"));
+                .orElseThrow(() -> new BusinessRuleException("No hay una caja abierta para registrar movimientos"));
 
         String tipoUpper = dto.getTipo() != null ? dto.getTipo().toUpperCase() : "";
+        Long montoIngresos = caja.getMontoIngresos() != null ? caja.getMontoIngresos() : 0L;
+        Long montoEgresos = caja.getMontoEgresos() != null ? caja.getMontoEgresos() : 0L;
+
         if ("INGRESO_MANUAL".equals(tipoUpper)) {
-            caja.setMontoIngresos(caja.getMontoIngresos().add(dto.getMonto()));
+            caja.setMontoIngresos(montoIngresos + dto.getMonto());
         } else if ("EGRESO_MANUAL".equals(tipoUpper)) {
-            caja.setMontoEgresos(caja.getMontoEgresos().add(dto.getMonto()));
+            caja.setMontoEgresos(montoEgresos + dto.getMonto());
         } else {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Tipo de movimiento no válido: " + dto.getTipo());
+            throw new BusinessRuleException("Tipo de movimiento no válido: " + dto.getTipo());
         }
 
-        BigDecimal esperado = caja.getMontoInicial()
-                .add(caja.getMontoIngresos())
-                .subtract(caja.getMontoEgresos());
+        Long inicial = caja.getMontoInicial() != null ? caja.getMontoInicial() : 0L;
+        Long esperado = inicial + caja.getMontoIngresos() - caja.getMontoEgresos();
         caja.setMontoEsperado(esperado);
         cajaRepository.save(caja);
 
@@ -92,14 +93,15 @@ public class CajaServiceImpl implements CajaService {
     @Transactional
     public CajaResponseDTO cerrarCaja(CierreCajaRequestDTO dto) {
         Caja caja = cajaRepository.findByEstado("ABIERTA")
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "No hay una caja abierta para cerrar"));
+                .orElseThrow(() -> new BusinessRuleException("No hay una caja abierta para cerrar"));
 
-        BigDecimal esperado = caja.getMontoInicial()
-                .add(caja.getMontoIngresos())
-                .subtract(caja.getMontoEgresos());
+        Long inicial = caja.getMontoInicial() != null ? caja.getMontoInicial() : 0L;
+        Long ingresos = caja.getMontoIngresos() != null ? caja.getMontoIngresos() : 0L;
+        Long egresos = caja.getMontoEgresos() != null ? caja.getMontoEgresos() : 0L;
+        Long esperado = inicial + ingresos - egresos;
 
-        BigDecimal cierre = dto.getMontoCierre() != null ? dto.getMontoCierre() : BigDecimal.ZERO;
-        BigDecimal diferencia = cierre.subtract(esperado);
+        Long cierre = dto.getMontoCierre() != null ? dto.getMontoCierre() : 0L;
+        Long diferencia = cierre - esperado;
 
         caja.setMontoEsperado(esperado);
         caja.setMontoCierre(cierre);
@@ -115,7 +117,7 @@ public class CajaServiceImpl implements CajaService {
     @Override
     @Transactional(readOnly = true)
     public List<MovimientoCajaResponseDTO> getMovimientosCaja(Long cajaId) {
-        return movimientoCajaRepository.findByCaja_Id(cajaId).stream()
+        return movimientoCajaRepository.findByCajaIdWithCaja(cajaId).stream()
                 .map(this::toMovimientoResponseDTO)
                 .collect(Collectors.toList());
     }

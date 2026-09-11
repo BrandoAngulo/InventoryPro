@@ -15,17 +15,14 @@ import com.example.soft.inventoryPro.Productos.Models.Productos;
 import com.example.soft.inventoryPro.Productos.Repository.ProductoRepository;
 import com.example.soft.inventoryPro.Proovedor.Models.Proovedor;
 import com.example.soft.inventoryPro.Proovedor.Repository.ProovedorRepository;
+import com.example.soft.inventoryPro.common.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -45,8 +42,8 @@ public class CompraServiceImpl implements CompraService {
     @Transactional
     public CompraResponseDTO registrarCompra(CompraRequestDTO dto) {
         Long provId = dto.getProveedorId();
-        Proovedor proveedor = proveedorRepository.findById(provId.intValue())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Proveedor no encontrado con ID: " + provId));
+        Proovedor proveedor = proveedorRepository.findById(provId)
+                .orElseThrow(() -> new ResourceNotFoundException("Proveedor no encontrado con ID: " + provId));
 
         Compra compra = Compra.builder()
                 .numeroFacturaProveedor(dto.getNumeroFacturaProveedor())
@@ -56,36 +53,36 @@ public class CompraServiceImpl implements CompraService {
                 .detalles(new ArrayList<>())
                 .build();
 
-        BigDecimal total = BigDecimal.ZERO;
+        Long total = 0L;
 
         // Save compra initial state to obtain ID for kardex reference
         compra = compraRepository.save(compra);
 
         for (DetalleCompraRequestDTO detalleDTO : dto.getDetalles()) {
             Long prodId = detalleDTO.getProductoId();
-            Productos producto = productoRepository.findById(prodId.intValue())
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Producto no encontrado con ID: " + prodId));
+            Productos producto = productoRepository.findById(prodId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Producto no encontrado con ID: " + prodId));
 
             int stockActual = producto.getCantidad() != null ? producto.getCantidad() : 0;
             int cantComprada = detalleDTO.getCantidad();
-            BigDecimal precioCompra = detalleDTO.getPrecioUnitario();
-            BigDecimal cppActual = producto.getCostoPromedio() != null ? producto.getCostoPromedio() : BigDecimal.ZERO;
+            Long precioCompra = detalleDTO.getPrecioUnitario();
+            Long cppActual = producto.getCostoPromedio() != null ? producto.getCostoPromedio() : 0L;
 
-            // Recálculo exacto del Costo Promedio Ponderado (CPP)
-            // nuevoCPP = ((stockActual * cppActual) + (cantComprada * precioCompra)) / (stockActual + cantComprada)
-            BigDecimal numerador = BigDecimal.valueOf(stockActual).multiply(cppActual)
-                    .add(BigDecimal.valueOf(cantComprada).multiply(precioCompra));
             int stockNuevo = stockActual + cantComprada;
-            BigDecimal nuevoCPP = numerador.divide(BigDecimal.valueOf(stockNuevo), 4, RoundingMode.HALF_UP)
-                    .setScale(2, RoundingMode.HALF_UP);
+            Long nuevoCPP;
+            if (stockActual == 0 || cppActual == 0L) {
+                nuevoCPP = precioCompra;
+            } else {
+                nuevoCPP = ((stockActual * cppActual) + ((long) cantComprada * precioCompra)) / stockNuevo;
+            }
 
             producto.setCostoPromedio(nuevoCPP);
             producto.setCantidad(stockNuevo);
-            producto.setPrecioCompra(precioCompra.setScale(0, RoundingMode.HALF_UP).intValue());
+            producto.setPrecioCompra(precioCompra);
             productoRepository.save(producto);
 
-            BigDecimal subtotal = precioCompra.multiply(BigDecimal.valueOf(cantComprada)).setScale(2, RoundingMode.HALF_UP);
-            total = total.add(subtotal);
+            Long subtotal = precioCompra * cantComprada;
+            total += subtotal;
 
             DetalleCompra detalle = DetalleCompra.builder()
                     .compra(compra)
@@ -118,16 +115,17 @@ public class CompraServiceImpl implements CompraService {
     }
 
     @Override
-    public CompraResponseDTO findByIdCompra(Integer id) {
-        Compra compra = compraRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Compra no encontrada con ID: " + id));
+    @Transactional(readOnly = true)
+    public CompraResponseDTO findByIdCompra(Long id) {
+        Compra compra = compraRepository.findByIdWithDetails(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Compra no encontrada con ID: " + id));
         return CompraMapper.toDTO(compra);
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<CompraResponseDTO> findByAllCompra() {
-        return compraRepository.findAll().stream()
+        return compraRepository.findAllWithDetails().stream()
                 .map(CompraMapper::toDTO)
                 .collect(Collectors.toList());
     }

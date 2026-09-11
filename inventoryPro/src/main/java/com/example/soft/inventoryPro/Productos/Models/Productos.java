@@ -6,7 +6,6 @@ import com.example.soft.inventoryPro.Proovedor.Models.Proovedor;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Set;
@@ -17,22 +16,21 @@ import java.util.Set;
 @NoArgsConstructor
 @Builder
 @Entity
-@ToString
 public class Productos {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer idProductos;
+    private Long idProductos;
 
     private String codigo;
 
     private String nombreProducto;
 
-    private Integer precioCompra;
+    private Long precioCompra;
 
-    private Integer precioVenta;
+    private Long precioVenta;
 
-    private BigDecimal costoPromedio;
+    private Long costoPromedio;
 
     private LocalDate fechaIngreso;
 
@@ -44,28 +42,31 @@ public class Productos {
 
     private String observacion;
 
-    @ManyToMany(fetch = FetchType.EAGER)
+    @Version
+    private Long version;
+
+    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(name = "producto_categoria",
             joinColumns = @JoinColumn(name = "producto_id"),
             inverseJoinColumns = @JoinColumn(name = "categoria_id")
     )
     @Builder.Default
-    Set<Categoria> categorias = new HashSet<>();
+    private Set<Categoria> categorias = new HashSet<>();
 
-    @ManyToMany(fetch = FetchType.EAGER)
+    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(name = "producto_bodega",
             joinColumns = @JoinColumn(name = "producto_id"),
             inverseJoinColumns = @JoinColumn(name = "bodega_id")
     )
     @Builder.Default
-    Set<Bodega> Bodega = new HashSet<>();
+    private Set<Bodega> Bodega = new HashSet<>();
 
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "producto_proveedor",
             joinColumns = @JoinColumn(name = "producto_id"),
             inverseJoinColumns = @JoinColumn(name = "proveedor_id")
     )
     @Builder.Default
-    Set<Proovedor> proveedores = new HashSet<>();
+    private Set<Proovedor> proveedores = new HashSet<>();
 }

@@ -15,7 +15,7 @@ public class VentaMapper {
                 .idVentas(entity.getId())
                 .fecha(entity.getFecha())
                 .total(entity.getTotal())
-                .idCliente(entity.getClientes() != null && entity.getClientes().getIdCliente() != null ? entity.getClientes().getIdCliente().longValue() : null)
+                .idCliente(entity.getClientes() != null ? entity.getClientes().getIdCliente() : null)
                 .nombreCliente(entity.getClientes() != null ? entity.getClientes().getNombre() : null)
                 .idUsuario(entity.getUsuario() != null ? entity.getUsuario().getIdUsuario() : null)
                 .nombreUsuario(entity.getUsuario() != null ? entity.getUsuario().getNombre() : null)
@@ -29,7 +29,7 @@ public class VentaMapper {
         if (entity == null) return null;
         return DetalleVentaResponseDTO.builder()
                 .idDetalleVenta(entity.getId())
-                .idProducto(entity.getProductos() != null && entity.getProductos().getIdProductos() != null ? entity.getProductos().getIdProductos().longValue() : null)
+                .idProducto(entity.getProductos() != null ? entity.getProductos().getIdProductos() : null)
                 .nombreProducto(entity.getProductos() != null ? entity.getProductos().getNombreProducto() : null)
                 .cantidad(entity.getCantidad())
                 .precioUnitario(entity.getPrecioUnitario())

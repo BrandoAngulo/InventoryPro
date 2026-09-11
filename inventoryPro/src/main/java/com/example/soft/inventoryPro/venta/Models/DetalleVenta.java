@@ -11,22 +11,21 @@ import lombok.*;
 @NoArgsConstructor
 @Builder
 @Entity
-@ToString
 public class DetalleVenta {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    private Long id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JsonBackReference
     @JoinColumn(name = "venta_id")
     private Ventas ventas;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "producto_id")
     private Productos productos;
 
     private Integer cantidad;
 
-    private Integer precioUnitario;
+    private Long precioUnitario;
 }

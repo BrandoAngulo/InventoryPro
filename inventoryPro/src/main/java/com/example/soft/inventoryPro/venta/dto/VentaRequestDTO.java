@@ -17,7 +17,7 @@ public class VentaRequestDTO {
     private Long idCliente;
 
     @NotNull(message = "El ID del usuario es obligatorio")
-    private Integer idUsuario;
+    private Long idUsuario;
 
     @NotEmpty(message = "La venta debe incluir al menos un producto")
     @Valid

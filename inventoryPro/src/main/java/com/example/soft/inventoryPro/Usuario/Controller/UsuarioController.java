@@ -31,7 +31,7 @@ public class UsuarioController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<UsuarioResponseDTO> obtenerPorId(@PathVariable Integer id) {
+    public ResponseEntity<UsuarioResponseDTO> obtenerPorId(@PathVariable Long id) {
         UsuarioResponseDTO usuario = usuarioService.obtenerPorId(id);
         return ResponseEntity.ok(usuario);
     }

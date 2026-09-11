@@ -19,7 +19,6 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 import static org.hamcrest.Matchers.is;
@@ -61,10 +60,10 @@ class DashboardControllerTest {
         clienteRepository.deleteAll();
 
         Caja caja = Caja.builder()
-                .montoInicial(new BigDecimal("100.00"))
-                .montoIngresos(new BigDecimal("50.00"))
-                .montoEgresos(BigDecimal.ZERO)
-                .montoEsperado(new BigDecimal("150.00"))
+                .montoInicial(100L)
+                .montoIngresos(50L)
+                .montoEgresos(0L)
+                .montoEsperado(150L)
                 .estado("ABIERTA")
                 .fechaApertura(LocalDateTime.now())
                 .build();
@@ -80,8 +79,8 @@ class DashboardControllerTest {
         Productos producto = Productos.builder()
                 .codigo("PROD-LOW")
                 .nombreProducto("Producto Stock Bajo")
-                .precioVenta(25)
-                .costoPromedio(new BigDecimal("15.00"))
+                .precioVenta(25L)
+                .costoPromedio(15L)
                 .cantidad(2)
                 .stockMinimo(5)
                 .activo(true)
@@ -95,7 +94,7 @@ class DashboardControllerTest {
         mockMvc.perform(get("/dashboard/resumen")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.totalCajaActual", is(150.00)))
+                .andExpect(jsonPath("$.totalCajaActual", is(150)))
                 .andExpect(jsonPath("$.clientesActivosCount", is(1)))
                 .andExpect(jsonPath("$.productosBajoStockCount", is(1)))
                 .andExpect(jsonPath("$.productosBajoStock[0].codigo", is("PROD-LOW")))

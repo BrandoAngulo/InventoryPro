@@ -2,7 +2,7 @@ package com.example.soft.inventoryPro.Pedido.dto;
 
 import com.example.soft.inventoryPro.Pedido.Models.EstadoPedido;
 import lombok.*;
-import java.math.BigDecimal;
+
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -17,10 +17,10 @@ public class PedidoResponseDTO {
     private String clienteNombre;
     private String clienteDocumento;
     private EstadoPedido estado;
-    private BigDecimal subtotal;
-    private BigDecimal descuentoGeneral;
-    private BigDecimal impuesto;
-    private BigDecimal total;
+    private Long subtotal;
+    private Long descuentoGeneral;
+    private Long impuesto;
+    private Long total;
     private String observacion;
     private LocalDateTime fechaCreacion;
     private LocalDateTime fechaActualizacion;

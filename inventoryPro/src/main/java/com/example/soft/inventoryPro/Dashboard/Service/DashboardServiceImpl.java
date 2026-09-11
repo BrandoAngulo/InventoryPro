@@ -17,7 +17,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -45,16 +44,16 @@ public class DashboardServiceImpl implements DashboardService {
         LocalDateTime finDia = LocalDate.now().atTime(LocalTime.MAX);
 
         // 2. Cálculo del monto total de ventas del día (Facturas en estado PAGADA)
-        BigDecimal ventasDelDia = facturaRepository.sumTotalByFechaBetweenAndEstado(inicioDia, finDia, "PAGADA");
+        Long ventasDelDia = facturaRepository.sumTotalByFechaBetweenAndEstado(inicioDia, finDia, "PAGADA");
         if (ventasDelDia == null) {
-            ventasDelDia = BigDecimal.ZERO;
+            ventasDelDia = 0L;
         }
 
-        // 3. Saldo esperado en la caja abierta actual (o 0.00 si está cerrada)
+        // 3. Saldo esperado en la caja abierta actual (o 0 si está cerrada)
         Optional<Caja> cajaAbiertaOpt = cajaRepository.findByEstado("ABIERTA");
-        BigDecimal totalCajaActual = cajaAbiertaOpt
+        Long totalCajaActual = cajaAbiertaOpt
                 .map(Caja::getMontoEsperado)
-                .orElse(BigDecimal.ZERO);
+                .orElse(0L);
 
         // 4. Conteo y lista de productos con stock bajo (stockActual <= stockMinimo)
         List<ProductoResponseDTO> productosBajoStock = productoService.listarProductosBajoStock();

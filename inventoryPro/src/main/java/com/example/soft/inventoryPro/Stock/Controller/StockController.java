@@ -25,13 +25,13 @@ public class StockController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<StockResponseDTO> actualizarStock(@PathVariable Integer id, @Valid @RequestBody StockRequestDTO dto) {
+    public ResponseEntity<StockResponseDTO> actualizarStock(@PathVariable Long id, @Valid @RequestBody StockRequestDTO dto) {
         StockResponseDTO stockActualizado = stockService.actualizarStock(id, dto);
         return ResponseEntity.ok(stockActualizado);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<StockResponseDTO> findByIdStock(@PathVariable Integer id) {
+    public ResponseEntity<StockResponseDTO> findByIdStock(@PathVariable Long id) {
         StockResponseDTO stock = stockService.finByIdStock(id);
         return ResponseEntity.ok(stock);
     }

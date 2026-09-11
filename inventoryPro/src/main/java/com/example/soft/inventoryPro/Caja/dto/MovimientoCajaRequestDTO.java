@@ -5,7 +5,6 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import lombok.*;
-import java.math.BigDecimal;
 
 @Data
 @Builder
@@ -13,14 +12,14 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 public class MovimientoCajaRequestDTO {
 
-    @NotBlank(message = "El tipo de movimiento es obligatorio (INGRESO_MANUAL o EGRESO_MANUAL)")
+    @NotBlank(message = "El tipo de movimiento es obligatorio (INGRESO_MANUAL, EGRESO_MANUAL)")
     private String tipo;
 
     @NotNull(message = "El monto es obligatorio")
-    @Positive(message = "El monto debe ser un valor positivo")
-    private BigDecimal monto;
+    @Positive(message = "El monto debe ser un valor mayor a cero")
+    private Long monto;
 
-    @NotBlank(message = "El concepto o justificación es obligatorio")
-    @Size(min = 3, max = 255, message = "El concepto debe tener entre 3 y 255 caracteres")
+    @NotBlank(message = "El concepto es obligatorio")
+    @Size(max = 255, message = "El concepto no debe superar 255 caracteres")
     private String concepto;
 }

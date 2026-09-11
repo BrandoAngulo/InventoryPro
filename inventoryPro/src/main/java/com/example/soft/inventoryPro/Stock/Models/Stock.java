@@ -10,15 +10,14 @@ import lombok.*;
 @NoArgsConstructor
 @Builder
 @Entity
-@ToString
 public class Stock {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    Integer idStock;
+    private Long idStock;
 
-    Integer cantidadStock;
+    private Integer cantidadStock;
 
-    @OneToOne
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "productos_id")
     private Productos productos;
 }

@@ -7,7 +7,6 @@ import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
 import lombok.*;
-import java.math.BigDecimal;
 
 @Data
 @Builder
@@ -26,7 +25,7 @@ public class AjusteStockRequestDTO {
     private Integer cantidad;
 
     @PositiveOrZero(message = "El costo unitario de ingreso no puede ser negativo")
-    private BigDecimal costoUnitarioIngreso;
+    private Long costoUnitarioIngreso;
 
     @NotBlank(message = "El motivo del ajuste es obligatorio")
     @Size(min = 5, max = 255, message = "El motivo debe tener entre 5 y 255 caracteres")

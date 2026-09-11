@@ -1,7 +1,6 @@
 package com.example.soft.inventoryPro.venta.dto;
 
 import lombok.*;
-import java.math.BigDecimal;
 
 @Data
 @Builder
@@ -13,7 +12,7 @@ public class DetalleFacturaResponseDTO {
     private String productoCodigo;
     private String productoNombre;
     private Integer cantidad;
-    private BigDecimal precioUnitario;
-    private BigDecimal costoUnitario;
-    private BigDecimal subtotal;
+    private Long precioUnitario;
+    private Long costoUnitario;
+    private Long subtotal;
 }

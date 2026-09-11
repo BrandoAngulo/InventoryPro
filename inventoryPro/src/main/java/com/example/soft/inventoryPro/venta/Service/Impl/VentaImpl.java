@@ -8,6 +8,8 @@ import com.example.soft.inventoryPro.Stock.Models.Stock;
 import com.example.soft.inventoryPro.Stock.Repository.StockRepository;
 import com.example.soft.inventoryPro.Usuario.Models.Usuario;
 import com.example.soft.inventoryPro.Usuario.Repository.UsuarioRepository;
+import com.example.soft.inventoryPro.common.exception.BusinessRuleException;
+import com.example.soft.inventoryPro.common.exception.ResourceNotFoundException;
 import com.example.soft.inventoryPro.venta.Models.DetalleVenta;
 import com.example.soft.inventoryPro.venta.Models.Ventas;
 import com.example.soft.inventoryPro.venta.Repository.VentaRepository;
@@ -18,10 +20,8 @@ import com.example.soft.inventoryPro.venta.dto.VentaResponseDTO;
 import com.example.soft.inventoryPro.venta.mapper.VentaMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -42,36 +42,36 @@ public class VentaImpl implements VentaService {
     @Override
     @Transactional
     public VentaResponseDTO registrarVentas(VentaRequestDTO dto) {
-        Cliente cliente = clienteRepository.findById(dto.getIdCliente().intValue())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cliente no encontrado con ID: " + dto.getIdCliente()));
+        Cliente cliente = clienteRepository.findById(dto.getIdCliente())
+                .orElseThrow(() -> new ResourceNotFoundException("Cliente no encontrado con ID: " + dto.getIdCliente()));
 
         Usuario usuario = usuarioRepository.findById(dto.getIdUsuario())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado con ID: " + dto.getIdUsuario()));
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con ID: " + dto.getIdUsuario()));
 
         Ventas venta = new Ventas();
         venta.setFecha(LocalDate.now());
         venta.setClientes(cliente);
         venta.setUsuario(usuario);
 
-        int total = 0;
+        Long total = 0L;
         List<DetalleVenta> detallesVenta = new ArrayList<>();
 
         for (DetalleVentaRequestDTO detalleDTO : dto.getDetalles()) {
-            Productos producto = productosRepository.findById(detalleDTO.getIdProducto().intValue())
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Producto no encontrado con ID: " + detalleDTO.getIdProducto()));
+            Productos producto = productosRepository.findById(detalleDTO.getIdProducto())
+                    .orElseThrow(() -> new ResourceNotFoundException("Producto no encontrado con ID: " + detalleDTO.getIdProducto()));
 
             Stock stock = stockRepository.findByProductos_IdProductos(producto.getIdProductos())
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Stock no encontrado para el producto: " + producto.getNombreProducto()));
+                    .orElseThrow(() -> new ResourceNotFoundException("Stock no encontrado para el producto: " + producto.getNombreProducto()));
 
             if (stock.getCantidadStock() < detalleDTO.getCantidad()) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Stock insuficiente para el producto: " + producto.getNombreProducto());
+                throw new BusinessRuleException("Stock insuficiente para el producto: " + producto.getNombreProducto());
             }
 
             stock.setCantidadStock(stock.getCantidadStock() - detalleDTO.getCantidad());
             stockRepository.save(stock);
 
-            int precioUnitario = producto.getPrecioVenta() != null ? producto.getPrecioVenta() : 0;
-            int subtotal = precioUnitario * detalleDTO.getCantidad();
+            Long precioUnitario = producto.getPrecioVenta() != null ? producto.getPrecioVenta() : 0L;
+            Long subtotal = precioUnitario * detalleDTO.getCantidad();
             total += subtotal;
 
             DetalleVenta detalle = new DetalleVenta();
@@ -90,15 +90,17 @@ public class VentaImpl implements VentaService {
     }
 
     @Override
-    public VentaResponseDTO listarVentas(Integer idVentas) {
-        Ventas venta = ventaRepository.findById(idVentas)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Venta no encontrada con ID: " + idVentas));
+    @Transactional(readOnly = true)
+    public VentaResponseDTO listarVentas(Long idVentas) {
+        Ventas venta = ventaRepository.findByIdWithDetails(idVentas)
+                .orElseThrow(() -> new ResourceNotFoundException("Venta no encontrada con ID: " + idVentas));
         return VentaMapper.toDTO(venta);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<VentaResponseDTO> listarTodasVentas() {
-        return ventaRepository.findAll().stream()
+        return ventaRepository.findAllWithDetails().stream()
                 .map(VentaMapper::toDTO)
                 .collect(Collectors.toList());
     }

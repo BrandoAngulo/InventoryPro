@@ -11,12 +11,12 @@ import com.example.soft.inventoryPro.Inventario.dto.*;
 import com.example.soft.inventoryPro.Productos.Models.Productos;
 import com.example.soft.inventoryPro.Productos.Repository.ProductoRepository;
 import com.example.soft.inventoryPro.Productos.dto.ProductoResponseDTO;
+import com.example.soft.inventoryPro.common.exception.BusinessRuleException;
+import com.example.soft.inventoryPro.common.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -35,13 +35,13 @@ public class InventarioServiceImpl implements InventarioService {
     public List<MovimientoInventarioResponseDTO> getMovimientos(Long productoId, TipoMovimiento tipo) {
         List<MovimientoInventario> movimientos;
         if (productoId != null && tipo != null) {
-            movimientos = movimientoRepository.findByProducto_IdProductosAndTipoMovimiento(productoId.intValue(), tipo);
+            movimientos = movimientoRepository.findByProducto_IdProductosAndTipoMovimiento(productoId, tipo);
         } else if (productoId != null) {
-            movimientos = movimientoRepository.findByProducto_IdProductos(productoId.intValue());
+            movimientos = movimientoRepository.findByProducto_IdProductos(productoId);
         } else if (tipo != null) {
             movimientos = movimientoRepository.findByTipoMovimiento(tipo);
         } else {
-            movimientos = movimientoRepository.findAll();
+            movimientos = movimientoRepository.findAllWithProductoOrderByFechaDesc();
         }
 
         return movimientos.stream()
@@ -51,11 +51,11 @@ public class InventarioServiceImpl implements InventarioService {
 
     @Override
     public List<ProductoResponseDTO> getProductos(Boolean bajoStock) {
-        List<Productos> productos = productoRepository.findAll();
+        List<Productos> productos;
         if (Boolean.TRUE.equals(bajoStock)) {
-            productos = productos.stream()
-                    .filter(p -> p.getCantidad() != null && p.getStockMinimo() != null && p.getCantidad() <= p.getStockMinimo())
-                    .collect(Collectors.toList());
+            productos = productoRepository.findProductosBajoStock();
+        } else {
+            productos = productoRepository.findAll();
         }
         return productos.stream()
                 .map(this::toProductoResponseDTO)
@@ -71,24 +71,20 @@ public class InventarioServiceImpl implements InventarioService {
                 : "Carga inicial de inventario";
 
         for (DetalleRegistroInicialRequestDTO item : request.getItems()) {
-            Productos p = productoRepository.findById(item.getProductoId().intValue())
-                    .orElseThrow(() -> new IllegalArgumentException("Producto no encontrado con ID: " + item.getProductoId()));
+            Productos p = productoRepository.findById(item.getProductoId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Producto no encontrado con ID: " + item.getProductoId()));
 
             int stockActual = p.getCantidad() != null ? p.getCantidad() : 0;
-            BigDecimal cppActual = p.getCostoPromedio() != null ? p.getCostoPromedio() : BigDecimal.ZERO;
+            Long cppActual = p.getCostoPromedio() != null ? p.getCostoPromedio() : 0L;
 
             int cantIngresada = item.getCantidad();
-            BigDecimal costoIngreso = item.getCostoUnitarioIngreso();
-            BigDecimal nuevoCPP;
+            Long costoIngreso = item.getCostoUnitarioIngreso();
+            Long nuevoCPP;
 
-            if (stockActual == 0 || cppActual.compareTo(BigDecimal.ZERO) == 0) {
-                nuevoCPP = costoIngreso.setScale(2, RoundingMode.HALF_UP);
+            if (stockActual == 0 || cppActual == 0L) {
+                nuevoCPP = costoIngreso;
             } else {
-                BigDecimal stockBD = BigDecimal.valueOf(stockActual);
-                BigDecimal cantBD = BigDecimal.valueOf(cantIngresada);
-                BigDecimal numerador = (stockBD.multiply(cppActual)).add(cantBD.multiply(costoIngreso));
-                BigDecimal denominador = stockBD.add(cantBD);
-                nuevoCPP = numerador.divide(denominador, 4, RoundingMode.HALF_UP).setScale(2, RoundingMode.HALF_UP);
+                nuevoCPP = ((stockActual * cppActual) + ((long) cantIngresada * costoIngreso)) / (stockActual + cantIngresada);
             }
 
             int nuevoStock = stockActual + cantIngresada;
@@ -108,7 +104,7 @@ public class InventarioServiceImpl implements InventarioService {
             movimientoRepository.save(mov);
 
             respuestas.add(RegistroInicialResponseDTO.builder()
-                    .productoId(p.getIdProductos().longValue())
+                    .productoId(p.getIdProductos())
                     .productoCodigo(p.getCodigo())
                     .productoNombre(p.getNombreProducto())
                     .stockAnterior(stockActual)
@@ -127,36 +123,31 @@ public class InventarioServiceImpl implements InventarioService {
     @Override
     @Transactional
     public AjusteStockResponseDTO registrarAjusteStock(AjusteStockRequestDTO request) {
-        Productos p = productoRepository.findById(request.getProductoId().intValue())
-                .orElseThrow(() -> new IllegalArgumentException("Producto no encontrado con ID: " + request.getProductoId()));
+        Productos p = productoRepository.findById(request.getProductoId())
+                .orElseThrow(() -> new ResourceNotFoundException("Producto no encontrado con ID: " + request.getProductoId()));
 
         int stockActual = p.getCantidad() != null ? p.getCantidad() : 0;
-        BigDecimal cppActual = p.getCostoPromedio() != null ? p.getCostoPromedio() : BigDecimal.ZERO;
+        Long cppActual = p.getCostoPromedio() != null ? p.getCostoPromedio() : 0L;
         int cantidadAjuste = request.getCantidad();
 
-        BigDecimal nuevoCPP = cppActual;
+        Long nuevoCPP = cppActual;
         int nuevoStock;
         TipoMovimiento tipoMovimiento;
 
         if (request.getTipoAjuste() == TipoAjuste.POSITIVO) {
-            BigDecimal costoIngreso = request.getCostoUnitarioIngreso();
-            if (costoIngreso != null && costoIngreso.compareTo(BigDecimal.ZERO) > 0) {
-                if (stockActual == 0 || cppActual.compareTo(BigDecimal.ZERO) == 0) {
-                    nuevoCPP = costoIngreso.setScale(2, RoundingMode.HALF_UP);
+            Long costoIngreso = request.getCostoUnitarioIngreso();
+            if (costoIngreso != null && costoIngreso > 0L) {
+                if (stockActual == 0 || cppActual == 0L) {
+                    nuevoCPP = costoIngreso;
                 } else {
-                    BigDecimal stockBD = BigDecimal.valueOf(stockActual);
-                    BigDecimal cantBD = BigDecimal.valueOf(cantidadAjuste);
-                    BigDecimal numerador = (stockBD.multiply(cppActual)).add(cantBD.multiply(costoIngreso));
-                    BigDecimal denominador = stockBD.add(cantBD);
-                    nuevoCPP = numerador.divide(denominador, 4, RoundingMode.HALF_UP).setScale(2, RoundingMode.HALF_UP);
+                    nuevoCPP = ((stockActual * cppActual) + ((long) cantidadAjuste * costoIngreso)) / (stockActual + cantidadAjuste);
                 }
             }
             nuevoStock = stockActual + cantidadAjuste;
             tipoMovimiento = TipoMovimiento.AJUSTE_POSITIVO;
         } else {
             if (cantidadAjuste > stockActual) {
-                throw new org.springframework.web.server.ResponseStatusException(
-                        org.springframework.http.HttpStatus.BAD_REQUEST,
+                throw new BusinessRuleException(
                         "Stock insuficiente para realizar el ajuste negativo. Stock actual: " + stockActual + ", cantidad requerida: " + cantidadAjuste);
             }
             nuevoStock = stockActual - cantidadAjuste;
@@ -181,7 +172,7 @@ public class InventarioServiceImpl implements InventarioService {
                 .build();
         ajuste = ajusteInventarioRepository.save(ajuste);
 
-        BigDecimal precioMovimiento = (request.getCostoUnitarioIngreso() != null) ? request.getCostoUnitarioIngreso() : cppActual;
+        Long precioMovimiento = (request.getCostoUnitarioIngreso() != null) ? request.getCostoUnitarioIngreso() : cppActual;
 
         MovimientoInventario mov = MovimientoInventario.builder()
                 .producto(p)
@@ -197,7 +188,7 @@ public class InventarioServiceImpl implements InventarioService {
 
         return AjusteStockResponseDTO.builder()
                 .id(ajuste.getId())
-                .productoId(p.getIdProductos().longValue())
+                .productoId(p.getIdProductos())
                 .productoCodigo(p.getCodigo())
                 .productoNombre(p.getNombreProducto())
                 .tipoAjuste(ajuste.getTipoAjuste())
@@ -216,9 +207,9 @@ public class InventarioServiceImpl implements InventarioService {
     public List<AjusteStockResponseDTO> getAjustes(Long productoId, TipoAjuste tipo) {
         List<AjusteInventario> ajustes;
         if (productoId != null && tipo != null) {
-            ajustes = ajusteInventarioRepository.findByProducto_IdProductosAndTipoAjuste(productoId.intValue(), tipo);
+            ajustes = ajusteInventarioRepository.findByProducto_IdProductosAndTipoAjuste(productoId, tipo);
         } else if (productoId != null) {
-            ajustes = ajusteInventarioRepository.findByProducto_IdProductos(productoId.intValue());
+            ajustes = ajusteInventarioRepository.findByProducto_IdProductos(productoId);
         } else if (tipo != null) {
             ajustes = ajusteInventarioRepository.findByTipoAjuste(tipo);
         } else {
@@ -234,7 +225,7 @@ public class InventarioServiceImpl implements InventarioService {
         Productos p = a.getProducto();
         return AjusteStockResponseDTO.builder()
                 .id(a.getId())
-                .productoId(p != null && p.getIdProductos() != null ? p.getIdProductos().longValue() : null)
+                .productoId(p != null ? p.getIdProductos() : null)
                 .productoCodigo(p != null ? p.getCodigo() : null)
                 .productoNombre(p != null ? p.getNombreProducto() : null)
                 .tipoAjuste(a.getTipoAjuste())
@@ -253,7 +244,7 @@ public class InventarioServiceImpl implements InventarioService {
         Productos p = m.getProducto();
         return MovimientoInventarioResponseDTO.builder()
                 .id(m.getId())
-                .productoId(p != null && p.getIdProductos() != null ? p.getIdProductos().longValue() : null)
+                .productoId(p != null ? p.getIdProductos() : null)
                 .productoCodigo(p != null ? p.getCodigo() : null)
                 .productoNombre(p != null ? p.getNombreProducto() : null)
                 .tipoMovimiento(m.getTipoMovimiento())
@@ -267,18 +258,18 @@ public class InventarioServiceImpl implements InventarioService {
     }
 
     private ProductoResponseDTO toProductoResponseDTO(Productos p) {
-        Long id = p.getIdProductos() != null ? p.getIdProductos().longValue() : null;
+        Long id = p.getIdProductos();
         String catNombre = p.getCategorias() != null && !p.getCategorias().isEmpty() ? p.getCategorias().iterator().next().getNombre() : null;
-        Long catId = p.getCategorias() != null && !p.getCategorias().isEmpty() ? (p.getCategorias().iterator().next().getIdCategoria() != null ? p.getCategorias().iterator().next().getIdCategoria().longValue() : null) : null;
+        Long catId = p.getCategorias() != null && !p.getCategorias().isEmpty() ? p.getCategorias().iterator().next().getIdCategoria() : null;
         String provNombre = p.getProveedores() != null && !p.getProveedores().isEmpty() ? p.getProveedores().iterator().next().getNombreProovedor() : null;
-        Long provId = p.getProveedores() != null && !p.getProveedores().isEmpty() ? (p.getProveedores().iterator().next().getIdProovedor() != null ? p.getProveedores().iterator().next().getIdProovedor().longValue() : null) : null;
+        Long provId = p.getProveedores() != null && !p.getProveedores().isEmpty() ? p.getProveedores().iterator().next().getIdProovedor() : null;
 
         return ProductoResponseDTO.builder()
                 .id(id)
                 .codigo(p.getCodigo())
                 .nombre(p.getNombreProducto())
                 .descripcion(p.getObservacion())
-                .precioVenta(p.getPrecioVenta() != null ? BigDecimal.valueOf(p.getPrecioVenta()) : null)
+                .precioVenta(p.getPrecioVenta())
                 .costoPromedio(p.getCostoPromedio())
                 .categoriaId(catId)
                 .categoriaNombre(catNombre)

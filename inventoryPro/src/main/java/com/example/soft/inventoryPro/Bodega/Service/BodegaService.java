@@ -8,6 +8,6 @@ import java.util.List;
 public interface BodegaService {
     BodegaResponseDTO registrarBodega(BodegaRequestDTO dto);
     List<BodegaResponseDTO> traerTodasBoderga();
-    BodegaResponseDTO actualizarBodega(Integer id, BodegaRequestDTO dto);
-    BodegaResponseDTO traerIdBoderga(Integer id);
+    BodegaResponseDTO actualizarBodega(Long id, BodegaRequestDTO dto);
+    BodegaResponseDTO traerIdBoderga(Long id);
 }

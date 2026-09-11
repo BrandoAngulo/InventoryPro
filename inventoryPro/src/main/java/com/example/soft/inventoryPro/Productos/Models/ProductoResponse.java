@@ -7,7 +7,7 @@ public class ProductoResponse {
     private Integer idProductos;
     private String nombre;
     //private String referencia;
-    private Integer precioventa;
+    private Long precioventa;
     private LocalDate fechaIngreso;
     private Integer cantidadStock;
     private String observacion;
@@ -15,7 +15,7 @@ public class ProductoResponse {
 
     public ProductoResponse(Integer idProductos,String nombre,
                            // String referencia,
-                            Integer precioventa, LocalDate  fechaIngreso, Integer cantidadStock, String observacion, String categoriasConcat) {
+                            Long precioventa, LocalDate  fechaIngreso, Integer cantidadStock, String observacion, String categoriasConcat) {
         this.idProductos = idProductos;
         this.nombre = nombre;
         //this.referencia = referencia;
@@ -50,11 +50,11 @@ public class ProductoResponse {
         this.referencia = referencia;
     }*/
 
-    public Integer getPrecioVenta() {
+    public Long getPrecioVenta() {
         return precioventa;
     }
 
-    public void setPrecioVenta(Integer precioventa) {
+    public void setPrecioVenta(Long precioventa) {
         this.precioventa = precioventa;
     }
 

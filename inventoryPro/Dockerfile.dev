@@ -1,22 +1,26 @@
-FROM eclipse-temurin:21-jdk-alpine
+# ==========================================
+# Dockerfile.dev (Entorno de Desarrollo Backend Java 21 + Maven)
+# ==========================================
+FROM maven:3.9.9-eclipse-temurin-21-alpine
 
 WORKDIR /app
 
-# Copy Maven wrapper and dependencies setup files
-COPY .mvn/ .mvn
-COPY mvnw pom.xml ./
+# Copiar archivos de configuración de Maven
+COPY pom.xml ./
+COPY .mvn .mvn
+COPY mvnw mvnw.cmd ./
 
-# Grant execution permissions for Maven wrapper
-RUN chmod +x mvnw
+# Asegurar saltos de línea LF en mvnw y dar permisos de ejecución
+RUN sed -i 's/\r$//' mvnw && chmod +x mvnw
 
-# Pre-fetch dependencies to speed up future builds
-RUN ./mvnw dependency:go-offline -B || true
+# Pre-descargar dependencias para acelerar construcciones en desarrollo
+RUN ./mvnw dependency:go-offline -B || mvn dependency:go-offline -B || true
 
-# Copy source code
+# Copiar código fuente
 COPY src ./src
 
-# Expose default application port
+# Exponer el puerto del Backend
 EXPOSE 8080
 
-# Execute Spring Boot application in development mode
+# Ejecutar Spring Boot en modo desarrollo
 CMD ["./mvnw", "spring-boot:run"]

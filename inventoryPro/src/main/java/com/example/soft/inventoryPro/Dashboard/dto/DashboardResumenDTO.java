@@ -5,7 +5,6 @@ import com.example.soft.inventoryPro.Productos.dto.ProductoResponseDTO;
 import com.example.soft.inventoryPro.venta.dto.FacturaResponseDTO;
 import lombok.*;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 @Data
@@ -17,13 +16,13 @@ public class DashboardResumenDTO {
     /**
      * Monto total de ventas realizadas en el día actual (00:00:00 - 23:59:59)
      */
-    private BigDecimal ventasDelDia;
+    private Long ventasDelDia;
 
     /**
      * Saldo esperado en la caja abierta actual (montoInicial + ingresos - egresos).
-     * Si no hay ninguna caja abierta actualmente, retorna 0.00.
+     * Si no hay ninguna caja abierta actualmente, retorna 0.
      */
-    private BigDecimal totalCajaActual;
+    private Long totalCajaActual;
 
     /**
      * Cantidad total de productos cuyo stockActual es menor o igual a su stockMinimo.

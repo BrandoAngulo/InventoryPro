@@ -23,7 +23,6 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 import static org.hamcrest.Matchers.*;
@@ -71,9 +70,9 @@ class PedidoIntegrationTest {
         producto = productoRepository.save(Productos.builder()
                 .codigo("PROD-PED-01")
                 .nombreProducto("Arroz Roa 1Kg")
-                .precioCompra(3000)
-                .precioVenta(5000)
-                .costoPromedio(new BigDecimal("3000.00"))
+                .precioCompra(3000L)
+                .precioVenta(5000L)
+                .costoPromedio(3000L)
                 .cantidad(10)
                 .stockMinimo(2)
                 .activo(true)
@@ -83,23 +82,23 @@ class PedidoIntegrationTest {
     @Test
     void crearPedido_Exito() throws Exception {
         PedidoRequestDTO requestDTO = PedidoRequestDTO.builder()
-                .clienteId(cliente.getIdCliente().longValue())
-                .descuentoGeneral(new BigDecimal("500.00"))
-                .impuesto(new BigDecimal("0.00"))
+                .clienteId(cliente.getIdCliente())
+                .descuentoGeneral(500L)
+                .impuesto(0L)
                 .observacion("Pedido urgente de prueba")
                 .detalles(List.of(
                         DetallePedidoRequestDTO.builder()
-                                .productoId(producto.getIdProductos().longValue())
+                                .productoId(producto.getIdProductos())
                                 .cantidad(2)
-                                .precioLista(new BigDecimal("5000.00"))
-                                .precioAjustado(new BigDecimal("4800.00"))
-                                .descuentoUnitario(new BigDecimal("300.00"))
+                                .precioLista(5000L)
+                                .precioAjustado(4800L)
+                                .descuentoUnitario(300L)
                                 .build()
                 ))
                 .build();
 
-        // subtotal = 2 * (4800 - 300) = 9000.00
-        // total = 9000 - 500 = 8500.00
+        // subtotal = 2 * (4800 - 300) = 9000
+        // total = 9000 - 500 = 8500
         mockMvc.perform(post("/pedidos")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestDTO)))
@@ -107,26 +106,26 @@ class PedidoIntegrationTest {
                 .andExpect(jsonPath("$.id").exists())
                 .andExpect(jsonPath("$.numeroPedido", startsWith("PED-")))
                 .andExpect(jsonPath("$.estado").value("PENDIENTE"))
-                .andExpect(jsonPath("$.subtotal").value(9000.00))
-                .andExpect(jsonPath("$.descuentoGeneral").value(500.00))
-                .andExpect(jsonPath("$.total").value(8500.00))
+                .andExpect(jsonPath("$.subtotal").value(9000))
+                .andExpect(jsonPath("$.descuentoGeneral").value(500))
+                .andExpect(jsonPath("$.total").value(8500))
                 .andExpect(jsonPath("$.detalles", hasSize(1)))
-                .andExpect(jsonPath("$.detalles[0].precioAjustado").value(4800.00))
-                .andExpect(jsonPath("$.detalles[0].descuentoUnitario").value(300.00))
-                .andExpect(jsonPath("$.detalles[0].subtotalRenglon").value(9000.00));
+                .andExpect(jsonPath("$.detalles[0].precioAjustado").value(4800))
+                .andExpect(jsonPath("$.detalles[0].descuentoUnitario").value(300))
+                .andExpect(jsonPath("$.detalles[0].subtotalRenglon").value(9000));
     }
 
     @Test
     void listarYObtenerPedido_Exito() throws Exception {
         PedidoRequestDTO requestDTO = PedidoRequestDTO.builder()
-                .clienteId(cliente.getIdCliente().longValue())
+                .clienteId(cliente.getIdCliente())
                 .detalles(List.of(
                         DetallePedidoRequestDTO.builder()
-                                .productoId(producto.getIdProductos().longValue())
+                                .productoId(producto.getIdProductos())
                                 .cantidad(1)
-                                .precioLista(new BigDecimal("5000.00"))
-                                .precioAjustado(new BigDecimal("5000.00"))
-                                .descuentoUnitario(BigDecimal.ZERO)
+                                .precioLista(5000L)
+                                .precioAjustado(5000L)
+                                .descuentoUnitario(0L)
                                 .build()
                 ))
                 .build();
@@ -155,13 +154,13 @@ class PedidoIntegrationTest {
     @Test
     void cambiarEstadoPedido_Exito() throws Exception {
         PedidoRequestDTO requestDTO = PedidoRequestDTO.builder()
-                .clienteId(cliente.getIdCliente().longValue())
+                .clienteId(cliente.getIdCliente())
                 .detalles(List.of(
                         DetallePedidoRequestDTO.builder()
-                                .productoId(producto.getIdProductos().longValue())
+                                .productoId(producto.getIdProductos())
                                 .cantidad(1)
-                                .precioLista(new BigDecimal("5000.00"))
-                                .precioAjustado(new BigDecimal("5000.00"))
+                                .precioLista(5000L)
+                                .precioAjustado(5000L)
                                 .build()
                 ))
                 .build();
@@ -188,13 +187,13 @@ class PedidoIntegrationTest {
     @Test
     void facturarPedido_SinCajaAbierta_Retorna400() throws Exception {
         PedidoRequestDTO requestDTO = PedidoRequestDTO.builder()
-                .clienteId(cliente.getIdCliente().longValue())
+                .clienteId(cliente.getIdCliente())
                 .detalles(List.of(
                         DetallePedidoRequestDTO.builder()
-                                .productoId(producto.getIdProductos().longValue())
+                                .productoId(producto.getIdProductos())
                                 .cantidad(1)
-                                .precioLista(new BigDecimal("5000.00"))
-                                .precioAjustado(new BigDecimal("5000.00"))
+                                .precioLista(5000L)
+                                .precioAjustado(5000L)
                                 .build()
                 ))
                 .build();
@@ -223,7 +222,7 @@ class PedidoIntegrationTest {
     void facturarPedido_FlujoCompletoExito() throws Exception {
         // 1. Abrir caja
         AperturaCajaRequestDTO apertura = AperturaCajaRequestDTO.builder()
-                .montoInicial(new BigDecimal("100000.00"))
+                .montoInicial(100000L)
                 .observacion("Apertura para facturar pedido")
                 .build();
 
@@ -234,21 +233,21 @@ class PedidoIntegrationTest {
 
         // 2. Crear pedido de 3 unidades
         PedidoRequestDTO requestDTO = PedidoRequestDTO.builder()
-                .clienteId(cliente.getIdCliente().longValue())
-                .descuentoGeneral(new BigDecimal("1000.00"))
+                .clienteId(cliente.getIdCliente())
+                .descuentoGeneral(1000L)
                 .detalles(List.of(
                         DetallePedidoRequestDTO.builder()
-                                .productoId(producto.getIdProductos().longValue())
+                                .productoId(producto.getIdProductos())
                                 .cantidad(3)
-                                .precioLista(new BigDecimal("5000.00"))
-                                .precioAjustado(new BigDecimal("4500.00"))
-                                .descuentoUnitario(new BigDecimal("500.00"))
+                                .precioLista(5000L)
+                                .precioAjustado(4500L)
+                                .descuentoUnitario(500L)
                                 .build()
                 ))
                 .build();
 
-        // Subtotal = 3 * (4500 - 500) = 12000.00
-        // Total = 12000 - 1000 = 11000.00
+        // Subtotal = 3 * (4500 - 500) = 12000
+        // Total = 12000 - 1000 = 11000
         String content = mockMvc.perform(post("/pedidos")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestDTO)))
@@ -269,7 +268,7 @@ class PedidoIntegrationTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").exists())
                 .andExpect(jsonPath("$.numeroFactura", startsWith("FAC-")))
-                .andExpect(jsonPath("$.total").value(11000.00))
+                .andExpect(jsonPath("$.total").value(11000))
                 .andExpect(jsonPath("$.estado").value("PAGADA"));
 
         // 4. Verificar que el estado del pedido cambió a FACTURADO

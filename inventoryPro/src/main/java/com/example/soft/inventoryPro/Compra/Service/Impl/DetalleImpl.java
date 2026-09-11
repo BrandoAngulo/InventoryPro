@@ -11,15 +11,13 @@ import com.example.soft.inventoryPro.Proovedor.Models.Proovedor;
 import com.example.soft.inventoryPro.Proovedor.Repository.ProovedorRepository;
 import com.example.soft.inventoryPro.Stock.Models.Stock;
 import com.example.soft.inventoryPro.Stock.Repository.StockRepository;
-import jakarta.transaction.Transactional;
+import com.example.soft.inventoryPro.common.exception.BusinessRuleException;
+import com.example.soft.inventoryPro.common.exception.ResourceNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.List;
 
 @Slf4j
@@ -47,16 +45,14 @@ public class DetalleImpl implements DetalleService {
         // 1. Buscar proveedor
         Proovedor proveedor = proveedorRepository
                 .findById(compra.getProovedor().getIdProovedor())
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "Proveedor no encontrado con ID: "
-                                + compra.getProovedor().getIdProovedor()
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Proveedor no encontrado con ID: " + compra.getProovedor().getIdProovedor()
                 ));
 
         // 2. Asociar proveedor real
         compra.setProovedor(proveedor);
 
-        BigDecimal total = BigDecimal.ZERO;
+        Long total = 0L;
 
         // 3. Recorrer los productos de la compra
         for (DetalleCompra detalle : compra.getDetalles()) {
@@ -64,42 +60,30 @@ public class DetalleImpl implements DetalleService {
             // 4. Buscar producto
             Productos producto = productoRepository
                     .findById(detalle.getProducto().getIdProductos())
-                    .orElseThrow(() -> new ResponseStatusException(
-                            HttpStatus.NOT_FOUND,
-                            "Producto no encontrado con ID: "
-                                    + detalle.getProducto().getIdProductos()
+                    .orElseThrow(() -> new ResourceNotFoundException(
+                            "Producto no encontrado con ID: " + detalle.getProducto().getIdProductos()
                     ));
 
             Stock stock = stockRepository
                     .findByProductos_IdProductos(
                             producto.getIdProductos()
                     )
-                    .orElseThrow(() -> new ResponseStatusException(
-                            HttpStatus.NOT_FOUND,
-                            "Stock no encontrado para el producto: "
-                                    + producto.getNombreProducto()
+                    .orElseThrow(() -> new ResourceNotFoundException(
+                            "Stock no encontrado para el producto: " + producto.getNombreProducto()
                     ));
 
             // 5. Validar cantidad
             if (detalle.getCantidad() == null || detalle.getCantidad() <= 0) {
-                throw new ResponseStatusException(
-                        HttpStatus.BAD_REQUEST,
-                        "La cantidad debe ser mayor que 0"
-                );
+                throw new BusinessRuleException("La cantidad debe ser mayor que 0");
             }
 
             // 6. Validar precio
-            if (detalle.getPrecioCompra() == null || detalle.getPrecioCompra().compareTo(BigDecimal.ZERO) <= 0) {
-                throw new ResponseStatusException(
-                        HttpStatus.BAD_REQUEST,
-                        "El precio de compra debe ser mayor que 0"
-                );
+            if (detalle.getPrecioCompra() == null || detalle.getPrecioCompra() <= 0L) {
+                throw new BusinessRuleException("El precio de compra debe ser mayor que 0");
             }
 
             // 7. Calcular subtotal
-            BigDecimal subtotal = detalle.getPrecioCompra()
-                    .multiply(BigDecimal.valueOf(detalle.getCantidad()))
-                    .setScale(2, RoundingMode.HALF_UP);
+            Long subtotal = detalle.getPrecioCompra() * detalle.getCantidad();
 
             detalle.setSubtotal(subtotal);
 
@@ -116,7 +100,7 @@ public class DetalleImpl implements DetalleService {
             stockRepository.save(stock);
 
             // 12. Acumular total
-            total = total.add(subtotal);
+            total += subtotal;
         }
 
         // 13. Establecer total de la compra
@@ -127,22 +111,25 @@ public class DetalleImpl implements DetalleService {
     }
 
     @Override
+    @Transactional
     public Compra actualizarCompra(Compra compra) {
         return null;
     }
 
     @Override
-    public String eliminarProovedor(Integer id) {
+    public String eliminarProovedor(Long id) {
         return "";
     }
 
     @Override
-    public Compra findByIdCompra(Integer id) {
-        return null;
+    @Transactional(readOnly = true)
+    public Compra findByIdCompra(Long id) {
+        return compraRepository.findByIdWithDetails(id).orElse(null);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Compra> findByAllCompra() {
-        return List.of();
+        return compraRepository.findAllWithDetails();
     }
 }

@@ -10,12 +10,11 @@ import com.example.soft.inventoryPro.Productos.dto.ProductoResponseDTO;
 import com.example.soft.inventoryPro.Productos.mapper.ProductoMapper;
 import com.example.soft.inventoryPro.Proovedor.Models.Proovedor;
 import com.example.soft.inventoryPro.Proovedor.Repository.ProovedorRepository;
+import com.example.soft.inventoryPro.common.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.HashSet;
 import java.util.List;
@@ -34,11 +33,11 @@ public class ProductosImpl implements ProductoService {
     @Override
     @Transactional
     public ProductoResponseDTO registrarProductos(ProductoRequestDTO dto) {
-        Categoria categoria = categoriaRepository.findById(dto.getCategoriaId().intValue())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Categoría no encontrada con ID: " + dto.getCategoriaId()));
+        Categoria categoria = categoriaRepository.findById(dto.getCategoriaId())
+                .orElseThrow(() -> new ResourceNotFoundException("Categoría no encontrada con ID: " + dto.getCategoriaId()));
 
-        Proovedor proveedor = proovedorRepository.findById(dto.getProveedorId().intValue())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Proveedor no encontrado con ID: " + dto.getProveedorId()));
+        Proovedor proveedor = proovedorRepository.findById(dto.getProveedorId())
+                .orElseThrow(() -> new ResourceNotFoundException("Proveedor no encontrado con ID: " + dto.getProveedorId()));
 
         Productos producto = productoMapper.toEntity(dto);
 
@@ -57,20 +56,20 @@ public class ProductosImpl implements ProductoService {
     @Override
     @Transactional
     public ProductoResponseDTO actualizarProductos(Long id, ProductoRequestDTO dto) {
-        Productos producto = productoRepository.findById(id.intValue())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Producto no encontrado con ID: " + id));
+        Productos producto = productoRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Producto no encontrado con ID: " + id));
 
         if (dto.getCategoriaId() != null) {
-            Categoria categoria = categoriaRepository.findById(dto.getCategoriaId().intValue())
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Categoría no encontrada con ID: " + dto.getCategoriaId()));
+            Categoria categoria = categoriaRepository.findById(dto.getCategoriaId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Categoría no encontrada con ID: " + dto.getCategoriaId()));
             Set<Categoria> catSet = new HashSet<>();
             catSet.add(categoria);
             producto.setCategorias(catSet);
         }
 
         if (dto.getProveedorId() != null) {
-            Proovedor proveedor = proovedorRepository.findById(dto.getProveedorId().intValue())
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Proveedor no encontrado con ID: " + dto.getProveedorId()));
+            Proovedor proveedor = proovedorRepository.findById(dto.getProveedorId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Proveedor no encontrado con ID: " + dto.getProveedorId()));
             Set<Proovedor> provSet = new HashSet<>();
             provSet.add(proveedor);
             producto.setProveedores(provSet);
@@ -84,8 +83,8 @@ public class ProductosImpl implements ProductoService {
     @Override
     @Transactional
     public void eliminarProductos(Long id) {
-        Productos producto = productoRepository.findById(id.intValue())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Producto no encontrado con ID: " + id));
+        Productos producto = productoRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Producto no encontrado con ID: " + id));
         producto.setActivo(false);
         productoRepository.save(producto);
     }
@@ -93,8 +92,8 @@ public class ProductosImpl implements ProductoService {
     @Override
     @Transactional(readOnly = true)
     public ProductoResponseDTO findByIdProductos(Long id) {
-        Productos producto = productoRepository.findById(id.intValue())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Producto no encontrado con ID: " + id));
+        Productos producto = productoRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Producto no encontrado con ID: " + id));
         return productoMapper.toDto(producto);
     }
 
@@ -110,8 +109,8 @@ public class ProductosImpl implements ProductoService {
     @Override
     @Transactional
     public ProductoResponseDTO cambiarEstado(Long id) {
-        Productos producto = productoRepository.findById(id.intValue())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Producto no encontrado con ID: " + id));
+        Productos producto = productoRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Producto no encontrado con ID: " + id));
 
         boolean actual = producto.getActivo() != null ? producto.getActivo() : true;
         producto.setActivo(!actual);
