@@ -14,15 +14,14 @@ public class ProductoMapper {
 
     public Productos toEntity(ProductoRequestDTO dto) {
         if (dto == null) return null;
-        Integer stockInit = dto.getStockInicial() != null ? dto.getStockInicial() : 0;
 
         return Productos.builder()
                 .codigo(dto.getCodigo())
                 .nombreProducto(dto.getNombre())
                 .observacion(dto.getDescripcion())
                 .precioVenta(dto.getPrecioVenta())
-                .costoPromedio(dto.getCostoInicial())
-                .cantidad(stockInit)
+                .costoPromedio(0L)
+                .cantidad(0)
                 .stockMinimo(dto.getStockMinimo())
                 .fechaIngreso(LocalDate.now())
                 .activo(true)
