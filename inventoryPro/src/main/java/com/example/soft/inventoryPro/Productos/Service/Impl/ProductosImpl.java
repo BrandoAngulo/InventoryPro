@@ -10,6 +10,7 @@ import com.example.soft.inventoryPro.Productos.dto.ProductoResponseDTO;
 import com.example.soft.inventoryPro.Productos.mapper.ProductoMapper;
 import com.example.soft.inventoryPro.Proovedor.Models.Proovedor;
 import com.example.soft.inventoryPro.Proovedor.Repository.ProovedorRepository;
+import com.example.soft.inventoryPro.common.exception.BusinessRuleException;
 import com.example.soft.inventoryPro.common.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,6 +34,10 @@ public class ProductosImpl implements ProductoService {
     @Override
     @Transactional
     public ProductoResponseDTO registrarProductos(ProductoRequestDTO dto) {
+        if (productoRepository.existsByCodigo(dto.getCodigo())) {
+            throw new BusinessRuleException("Ya existe un producto con el código: " + dto.getCodigo());
+        }
+
         Categoria categoria = categoriaRepository.findById(dto.getCategoriaId())
                 .orElseThrow(() -> new ResourceNotFoundException("Categoría no encontrada con ID: " + dto.getCategoriaId()));
 
@@ -58,6 +63,10 @@ public class ProductosImpl implements ProductoService {
     public ProductoResponseDTO actualizarProductos(Long id, ProductoRequestDTO dto) {
         Productos producto = productoRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Producto no encontrado con ID: " + id));
+
+        if (dto.getCodigo() != null && productoRepository.existsByCodigoAndIdProductosNot(dto.getCodigo(), id)) {
+            throw new BusinessRuleException("Ya existe otro producto con el código: " + dto.getCodigo());
+        }
 
         if (dto.getCategoriaId() != null) {
             Categoria categoria = categoriaRepository.findById(dto.getCategoriaId())
