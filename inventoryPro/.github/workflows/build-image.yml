@@ -1,0 +1,55 @@
+name: Build Docker Image
+
+on:
+  workflow_call:
+    inputs:
+      image:
+        required: true
+        type: string
+      folder:
+        required: true
+        type: string
+      publish_latest:
+        required: true
+        type: boolean
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    environment: REGISTRY-SERVER
+    env:
+      REGISTRY_URL: ${{ secrets.REGISTRY_URL }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Resolve image tag
+        id: version
+        shell: bash
+        run: echo "sha_short=$(git rev-parse --short=8 HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Validate registry configuration
+        shell: bash
+        run: test -n "$REGISTRY_URL"
+
+      - name: Build image
+        run: |
+          docker build \
+            -t "$REGISTRY_URL/${{ inputs.image }}:${{ steps.version.outputs.sha_short }}" \
+            "./${{ inputs.folder }}"
+
+      - name: Tag latest
+        if: inputs.publish_latest
+        run: docker tag "$REGISTRY_URL/${{ inputs.image }}:${{ steps.version.outputs.sha_short }}" "$REGISTRY_URL/${{ inputs.image }}:latest"
+
+      - name: Push image
+        run: |
+          docker push "$REGISTRY_URL/${{ inputs.image }}:${{ steps.version.outputs.sha_short }}"
+          if [ "${{ inputs.publish_latest }}" = "true" ]; then
+            docker push "$REGISTRY_URL/${{ inputs.image }}:latest"
+          fi
+
+      - name: Summary
+        run: |
+          echo "Published: $REGISTRY_URL/${{ inputs.image }}:${{ steps.version.outputs.sha_short }}"

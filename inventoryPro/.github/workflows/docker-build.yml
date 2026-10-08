@@ -1,0 +1,26 @@
+name: Build & Push Backend
+
+on:
+  push:
+    branches:
+      - main
+      - feature
+      - 'mvp/**'
+    paths:
+      - 'src/**'
+      - 'pom.xml'
+      - 'mvnw'
+      - 'mvnw.cmd'
+      - '.mvn/**'
+      - 'Dockerfile'
+      - '.dockerignore'
+      - '.github/workflows/**'
+
+jobs:
+  build:
+    uses: ./.github/workflows/build-image.yml
+    with:
+      image: pedidos-api
+      folder: .
+      publish_latest: ${{ github.ref_name == 'main' }}
+    secrets: inherit
