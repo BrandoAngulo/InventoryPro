@@ -14,6 +14,9 @@ import java.util.Optional;
 public interface FacturaRepository extends JpaRepository<Factura, Long> {
     Optional<Factura> findByNumeroFactura(String numeroFactura);
 
+    @Query("SELECT f.numeroFactura FROM Factura f")
+    List<String> findAllNumerosFactura();
+
     @Query("SELECT SUM(f.total) FROM Factura f WHERE f.fecha BETWEEN :inicio AND :fin AND f.estado = :estado")
     Long sumTotalByFechaBetweenAndEstado(@Param("inicio") LocalDateTime inicio,
                                          @Param("fin") LocalDateTime fin,

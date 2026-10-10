@@ -15,6 +15,8 @@ import com.example.soft.inventoryPro.Inventario.Models.TipoMovimiento;
 import com.example.soft.inventoryPro.Inventario.Repository.MovimientoInventarioRepository;
 import com.example.soft.inventoryPro.Productos.Models.Productos;
 import com.example.soft.inventoryPro.Productos.Repository.ProductoRepository;
+import com.example.soft.inventoryPro.Secuencia.Models.TipoSecuencia;
+import com.example.soft.inventoryPro.Secuencia.Service.NumeracionService;
 import com.example.soft.inventoryPro.Ultils.Errores.StockInsuficienteException;
 import com.example.soft.inventoryPro.common.exception.BusinessRuleException;
 import com.example.soft.inventoryPro.common.exception.ResourceNotFoundException;
@@ -28,7 +30,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 @Service
@@ -41,8 +42,7 @@ public class FacturaServiceImpl implements FacturaService {
     private final CajaRepository cajaRepository;
     private final MovimientoCajaRepository movimientoCajaRepository;
     private final MovimientoInventarioRepository movimientoInventarioRepository;
-
-    private static final AtomicLong sequenceCounter = new AtomicLong(System.currentTimeMillis() % 1000000);
+    private final NumeracionService numeracionService;
 
     @Override
     @Transactional
@@ -68,8 +68,8 @@ public class FacturaServiceImpl implements FacturaService {
             }
         }
 
-        // 4. Generar número de factura único
-        String numeroFactura = "FAC-" + String.format("%06d", sequenceCounter.incrementAndGet());
+        // 4. Generar número de factura único (contador persistente, compartido con facturar-pedido)
+        String numeroFactura = numeracionService.siguiente(TipoSecuencia.FACTURA);
 
         Factura factura = Factura.builder()
                 .numeroFactura(numeroFactura)

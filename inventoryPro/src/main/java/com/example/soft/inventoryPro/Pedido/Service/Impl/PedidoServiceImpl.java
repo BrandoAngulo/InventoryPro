@@ -20,6 +20,8 @@ import com.example.soft.inventoryPro.Pedido.Service.PedidoService;
 import com.example.soft.inventoryPro.Pedido.dto.*;
 import com.example.soft.inventoryPro.Productos.Models.Productos;
 import com.example.soft.inventoryPro.Productos.Repository.ProductoRepository;
+import com.example.soft.inventoryPro.Secuencia.Models.TipoSecuencia;
+import com.example.soft.inventoryPro.Secuencia.Service.NumeracionService;
 import com.example.soft.inventoryPro.Ultils.Errores.StockInsuficienteException;
 import com.example.soft.inventoryPro.common.exception.BusinessRuleException;
 import com.example.soft.inventoryPro.common.exception.ResourceNotFoundException;
@@ -32,7 +34,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 @Service
@@ -46,9 +47,7 @@ public class PedidoServiceImpl implements PedidoService {
     private final CajaRepository cajaRepository;
     private final MovimientoCajaRepository movimientoCajaRepository;
     private final MovimientoInventarioRepository movimientoInventarioRepository;
-
-    private static final AtomicLong sequenceCounter = new AtomicLong(System.currentTimeMillis() % 1000000);
-    private static final AtomicLong facturaSequenceCounter = new AtomicLong(System.currentTimeMillis() % 1000000);
+    private final NumeracionService numeracionService;
 
     @Override
     @Transactional
@@ -137,7 +136,7 @@ public class PedidoServiceImpl implements PedidoService {
         }
 
         // 3. Crear Factura
-        String numeroFactura = "FAC-" + String.format("%06d", facturaSequenceCounter.incrementAndGet());
+        String numeroFactura = numeracionService.siguiente(TipoSecuencia.FACTURA);
         Factura factura = Factura.builder()
                 .numeroFactura(numeroFactura)
                 .cliente(pedido.getCliente())
@@ -235,7 +234,7 @@ public class PedidoServiceImpl implements PedidoService {
 
         Pedido pedido = pedidoExistente != null ? pedidoExistente : new Pedido();
         if (pedido.getId() == null) {
-            pedido.setNumeroPedido("PED-" + String.format("%06d", sequenceCounter.incrementAndGet()));
+            pedido.setNumeroPedido(numeracionService.siguiente(TipoSecuencia.PEDIDO));
             pedido.setEstado(EstadoPedido.PENDIENTE);
         }
         pedido.setCliente(cliente);
