@@ -1,9 +1,8 @@
 package com.example.soft.inventoryPro.Pedido.Service.Impl;
 
 import com.example.soft.inventoryPro.Caja.Models.Caja;
-import com.example.soft.inventoryPro.Caja.Models.MovimientoCaja;
 import com.example.soft.inventoryPro.Caja.Repository.CajaRepository;
-import com.example.soft.inventoryPro.Caja.Repository.MovimientoCajaRepository;
+import com.example.soft.inventoryPro.Caja.Service.CajaService;
 import com.example.soft.inventoryPro.Clientes.Models.Cliente;
 import com.example.soft.inventoryPro.Clientes.Repository.ClienteRepository;
 import com.example.soft.inventoryPro.Factura.Models.DetalleFactura;
@@ -45,7 +44,7 @@ public class PedidoServiceImpl implements PedidoService {
     private final ProductoRepository productoRepository;
     private final FacturaRepository facturaRepository;
     private final CajaRepository cajaRepository;
-    private final MovimientoCajaRepository movimientoCajaRepository;
+    private final CajaService cajaService;
     private final MovimientoInventarioRepository movimientoInventarioRepository;
     private final NumeracionService numeracionService;
 
@@ -198,38 +197,16 @@ public class PedidoServiceImpl implements PedidoService {
 
         factura = facturaRepository.save(factura);
 
-        // 5. Registrar movimiento de Caja solo para efectivo: tarjeta y transferencia
-        //    no entran al cajón y no deben sumar al monto esperado del arqueo
-        if (esPagoEnEfectivo(factura.getFormaPago())) {
-            Long ingresosActual = caja.getMontoIngresos() != null ? caja.getMontoIngresos() : 0L;
-            caja.setMontoIngresos(ingresosActual + factura.getTotal());
-            Long inicial = caja.getMontoInicial() != null ? caja.getMontoInicial() : 0L;
-            Long egresos = caja.getMontoEgresos() != null ? caja.getMontoEgresos() : 0L;
-            Long esperado = inicial + caja.getMontoIngresos() - egresos;
-            caja.setMontoEsperado(esperado);
-            cajaRepository.save(caja);
-
-            MovimientoCaja movCaja = MovimientoCaja.builder()
-                    .caja(caja)
-                    .tipo("INGRESO_VENTA")
-                    .monto(factura.getTotal())
-                    .concepto("Venta Factura #" + factura.getNumeroFactura() + " (Pedido #" + pedido.getNumeroPedido() + ")")
-                    .facturaId(factura.getId())
-                    .fecha(LocalDateTime.now())
-                    .build();
-
-            movimientoCajaRepository.save(movCaja);
-        }
+        // 5. Movimiento de caja según forma de pago (solo el efectivo suma al esperado del arqueo)
+        cajaService.registrarIngresoPorVenta(caja, factura.getFormaPago(), factura.getTotal(),
+                "Venta Factura #" + factura.getNumeroFactura() + " (Pedido #" + pedido.getNumeroPedido() + ")",
+                factura.getId());
 
         // 6. Actualizar estado del pedido a FACTURADO
         pedido.setEstado(EstadoPedido.FACTURADO);
         pedidoRepository.save(pedido);
 
         return toFacturaResponseDTO(factura);
-    }
-
-    private boolean esPagoEnEfectivo(String formaPago) {
-        return formaPago != null && "EFECTIVO".equalsIgnoreCase(formaPago.trim());
     }
 
     private Pedido construirPedido(PedidoRequestDTO dto, Pedido pedidoExistente) {
