@@ -34,7 +34,9 @@ public class ProductosImpl implements ProductoService {
     @Override
     @Transactional
     public ProductoResponseDTO registrarProductos(ProductoRequestDTO dto) {
-        if (productoRepository.existsByCodigo(dto.getCodigo())) {
+        // Se normaliza para que " ABA-001" o "aba-001" no pasen como un código distinto de "ABA-001"
+        dto.setCodigo(dto.getCodigo().trim());
+        if (productoRepository.existsByCodigoIgnoreCase(dto.getCodigo())) {
             throw new BusinessRuleException("Ya existe un producto con el código: " + dto.getCodigo());
         }
 
@@ -64,7 +66,10 @@ public class ProductosImpl implements ProductoService {
         Productos producto = productoRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Producto no encontrado con ID: " + id));
 
-        if (dto.getCodigo() != null && productoRepository.existsByCodigoAndIdProductosNot(dto.getCodigo(), id)) {
+        if (dto.getCodigo() != null) {
+            dto.setCodigo(dto.getCodigo().trim());
+        }
+        if (dto.getCodigo() != null && productoRepository.existsByCodigoIgnoreCaseAndIdProductosNot(dto.getCodigo(), id)) {
             throw new BusinessRuleException("Ya existe otro producto con el código: " + dto.getCodigo());
         }
 
