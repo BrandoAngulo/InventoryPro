@@ -198,31 +198,38 @@ public class PedidoServiceImpl implements PedidoService {
 
         factura = facturaRepository.save(factura);
 
-        // 5. Registrar movimiento de Caja
-        Long ingresosActual = caja.getMontoIngresos() != null ? caja.getMontoIngresos() : 0L;
-        caja.setMontoIngresos(ingresosActual + factura.getTotal());
-        Long inicial = caja.getMontoInicial() != null ? caja.getMontoInicial() : 0L;
-        Long egresos = caja.getMontoEgresos() != null ? caja.getMontoEgresos() : 0L;
-        Long esperado = inicial + caja.getMontoIngresos() - egresos;
-        caja.setMontoEsperado(esperado);
-        cajaRepository.save(caja);
+        // 5. Registrar movimiento de Caja solo para efectivo: tarjeta y transferencia
+        //    no entran al cajón y no deben sumar al monto esperado del arqueo
+        if (esPagoEnEfectivo(factura.getFormaPago())) {
+            Long ingresosActual = caja.getMontoIngresos() != null ? caja.getMontoIngresos() : 0L;
+            caja.setMontoIngresos(ingresosActual + factura.getTotal());
+            Long inicial = caja.getMontoInicial() != null ? caja.getMontoInicial() : 0L;
+            Long egresos = caja.getMontoEgresos() != null ? caja.getMontoEgresos() : 0L;
+            Long esperado = inicial + caja.getMontoIngresos() - egresos;
+            caja.setMontoEsperado(esperado);
+            cajaRepository.save(caja);
 
-        MovimientoCaja movCaja = MovimientoCaja.builder()
-                .caja(caja)
-                .tipo("INGRESO_VENTA")
-                .monto(factura.getTotal())
-                .concepto("Venta Factura #" + factura.getNumeroFactura() + " (Pedido #" + pedido.getNumeroPedido() + ")")
-                .facturaId(factura.getId())
-                .fecha(LocalDateTime.now())
-                .build();
+            MovimientoCaja movCaja = MovimientoCaja.builder()
+                    .caja(caja)
+                    .tipo("INGRESO_VENTA")
+                    .monto(factura.getTotal())
+                    .concepto("Venta Factura #" + factura.getNumeroFactura() + " (Pedido #" + pedido.getNumeroPedido() + ")")
+                    .facturaId(factura.getId())
+                    .fecha(LocalDateTime.now())
+                    .build();
 
-        movimientoCajaRepository.save(movCaja);
+            movimientoCajaRepository.save(movCaja);
+        }
 
         // 6. Actualizar estado del pedido a FACTURADO
         pedido.setEstado(EstadoPedido.FACTURADO);
         pedidoRepository.save(pedido);
 
         return toFacturaResponseDTO(factura);
+    }
+
+    private boolean esPagoEnEfectivo(String formaPago) {
+        return formaPago != null && "EFECTIVO".equalsIgnoreCase(formaPago.trim());
     }
 
     private Pedido construirPedido(PedidoRequestDTO dto, Pedido pedidoExistente) {

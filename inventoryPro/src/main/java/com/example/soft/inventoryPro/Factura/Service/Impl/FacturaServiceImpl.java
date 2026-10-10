@@ -136,27 +136,34 @@ public class FacturaServiceImpl implements FacturaService {
         factura.setTotal(subtotalGeneral);
         Factura guardada = facturaRepository.save(factura);
 
-        // 5. Generar automáticamente movimiento de caja INGRESO_VENTA
-        Long montoIngresosActual = caja.getMontoIngresos() != null ? caja.getMontoIngresos() : 0L;
-        caja.setMontoIngresos(montoIngresosActual + guardada.getTotal());
-        Long inicial = caja.getMontoInicial() != null ? caja.getMontoInicial() : 0L;
-        Long egresos = caja.getMontoEgresos() != null ? caja.getMontoEgresos() : 0L;
-        Long esperado = inicial + caja.getMontoIngresos() - egresos;
-        caja.setMontoEsperado(esperado);
-        cajaRepository.save(caja);
+        // 5. Movimiento de caja INGRESO_VENTA solo para efectivo: tarjeta y transferencia
+        //    no entran al cajón y no deben sumar al monto esperado del arqueo
+        if (esPagoEnEfectivo(guardada.getFormaPago())) {
+            Long montoIngresosActual = caja.getMontoIngresos() != null ? caja.getMontoIngresos() : 0L;
+            caja.setMontoIngresos(montoIngresosActual + guardada.getTotal());
+            Long inicial = caja.getMontoInicial() != null ? caja.getMontoInicial() : 0L;
+            Long egresos = caja.getMontoEgresos() != null ? caja.getMontoEgresos() : 0L;
+            Long esperado = inicial + caja.getMontoIngresos() - egresos;
+            caja.setMontoEsperado(esperado);
+            cajaRepository.save(caja);
 
-        MovimientoCaja movCaja = MovimientoCaja.builder()
-                .caja(caja)
-                .tipo("INGRESO_VENTA")
-                .monto(guardada.getTotal())
-                .concepto("Venta Factura #" + guardada.getNumeroFactura())
-                .facturaId(guardada.getId())
-                .fecha(LocalDateTime.now())
-                .build();
+            MovimientoCaja movCaja = MovimientoCaja.builder()
+                    .caja(caja)
+                    .tipo("INGRESO_VENTA")
+                    .monto(guardada.getTotal())
+                    .concepto("Venta Factura #" + guardada.getNumeroFactura())
+                    .facturaId(guardada.getId())
+                    .fecha(LocalDateTime.now())
+                    .build();
 
-        movimientoCajaRepository.save(movCaja);
+            movimientoCajaRepository.save(movCaja);
+        }
 
         return toFacturaResponseDTO(guardada);
+    }
+
+    private boolean esPagoEnEfectivo(String formaPago) {
+        return formaPago != null && "EFECTIVO".equalsIgnoreCase(formaPago.trim());
     }
 
     @Override
