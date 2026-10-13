@@ -23,6 +23,10 @@ public class CajaServiceImpl implements CajaService {
     private final CajaRepository cajaRepository;
     private final MovimientoCajaRepository movimientoCajaRepository;
 
+    private static final String TIPO_VENTA_EFECTIVO = "INGRESO_VENTA";
+    private static final String TIPO_VENTA_TARJETA = "VENTA_TARJETA";
+    private static final String TIPO_VENTA_TRANSFERENCIA = "VENTA_TRANSFERENCIA";
+
     @Override
     @Transactional
     public CajaResponseDTO abrirCaja(AperturaCajaRequestDTO dto) {
@@ -122,8 +126,44 @@ public class CajaServiceImpl implements CajaService {
                 .collect(Collectors.toList());
     }
 
+    @Override
+    public void registrarIngresoPorVenta(Caja caja, String formaPago, Long monto, String concepto, Long facturaId) {
+        String forma = formaPago != null ? formaPago.trim().toUpperCase() : "";
+        String tipo = switch (forma) {
+            case "EFECTIVO" -> TIPO_VENTA_EFECTIVO;
+            case "TARJETA" -> TIPO_VENTA_TARJETA;
+            case "TRANSFERENCIA" -> TIPO_VENTA_TRANSFERENCIA;
+            default -> throw new BusinessRuleException("Forma de pago no válida: " + formaPago);
+        };
+
+        // Solo el efectivo entra al cajón; tarjeta y transferencia se registran pero no cambian el arqueo
+        if (TIPO_VENTA_EFECTIVO.equals(tipo)) {
+            Long ingresosActual = caja.getMontoIngresos() != null ? caja.getMontoIngresos() : 0L;
+            caja.setMontoIngresos(ingresosActual + monto);
+            Long inicial = caja.getMontoInicial() != null ? caja.getMontoInicial() : 0L;
+            Long egresos = caja.getMontoEgresos() != null ? caja.getMontoEgresos() : 0L;
+            caja.setMontoEsperado(inicial + caja.getMontoIngresos() - egresos);
+            cajaRepository.save(caja);
+        }
+
+        MovimientoCaja mov = MovimientoCaja.builder()
+                .caja(caja)
+                .tipo(tipo)
+                .monto(monto)
+                .concepto(concepto)
+                .facturaId(facturaId)
+                .fecha(LocalDateTime.now())
+                .build();
+
+        movimientoCajaRepository.save(mov);
+    }
+
     public CajaResponseDTO toCajaResponseDTO(Caja caja) {
         if (caja == null) return null;
+        Long totalTarjeta = caja.getId() != null
+                ? movimientoCajaRepository.sumMontoByCajaIdAndTipo(caja.getId(), TIPO_VENTA_TARJETA) : 0L;
+        Long totalTransferencia = caja.getId() != null
+                ? movimientoCajaRepository.sumMontoByCajaIdAndTipo(caja.getId(), TIPO_VENTA_TRANSFERENCIA) : 0L;
         return CajaResponseDTO.builder()
                 .id(caja.getId())
                 .montoInicial(caja.getMontoInicial())
@@ -137,6 +177,8 @@ public class CajaServiceImpl implements CajaService {
                 .fechaCierre(caja.getFechaCierre())
                 .observacionApertura(caja.getObservacionApertura())
                 .observacionCierre(caja.getObservacionCierre())
+                .totalTarjeta(totalTarjeta)
+                .totalTransferencia(totalTransferencia)
                 .build();
     }
 

@@ -14,4 +14,7 @@ public interface MovimientoCajaRepository extends JpaRepository<MovimientoCaja, 
 
     @Query("SELECT DISTINCT m FROM MovimientoCaja m JOIN FETCH m.caja WHERE m.caja.id = :cajaId ORDER BY m.fecha DESC")
     List<MovimientoCaja> findByCajaIdWithCaja(@Param("cajaId") Long cajaId);
+
+    @Query("SELECT COALESCE(SUM(m.monto), 0) FROM MovimientoCaja m WHERE m.caja.id = :cajaId AND m.tipo = :tipo")
+    Long sumMontoByCajaIdAndTipo(@Param("cajaId") Long cajaId, @Param("tipo") String tipo);
 }

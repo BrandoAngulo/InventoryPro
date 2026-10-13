@@ -1,9 +1,8 @@
 package com.example.soft.inventoryPro.Pedido.Service.Impl;
 
 import com.example.soft.inventoryPro.Caja.Models.Caja;
-import com.example.soft.inventoryPro.Caja.Models.MovimientoCaja;
 import com.example.soft.inventoryPro.Caja.Repository.CajaRepository;
-import com.example.soft.inventoryPro.Caja.Repository.MovimientoCajaRepository;
+import com.example.soft.inventoryPro.Caja.Service.CajaService;
 import com.example.soft.inventoryPro.Clientes.Models.Cliente;
 import com.example.soft.inventoryPro.Clientes.Repository.ClienteRepository;
 import com.example.soft.inventoryPro.Factura.Models.DetalleFactura;
@@ -20,6 +19,8 @@ import com.example.soft.inventoryPro.Pedido.Service.PedidoService;
 import com.example.soft.inventoryPro.Pedido.dto.*;
 import com.example.soft.inventoryPro.Productos.Models.Productos;
 import com.example.soft.inventoryPro.Productos.Repository.ProductoRepository;
+import com.example.soft.inventoryPro.Secuencia.Models.TipoSecuencia;
+import com.example.soft.inventoryPro.Secuencia.Service.NumeracionService;
 import com.example.soft.inventoryPro.Ultils.Errores.StockInsuficienteException;
 import com.example.soft.inventoryPro.common.exception.BusinessRuleException;
 import com.example.soft.inventoryPro.common.exception.ResourceNotFoundException;
@@ -32,7 +33,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 @Service
@@ -44,11 +44,9 @@ public class PedidoServiceImpl implements PedidoService {
     private final ProductoRepository productoRepository;
     private final FacturaRepository facturaRepository;
     private final CajaRepository cajaRepository;
-    private final MovimientoCajaRepository movimientoCajaRepository;
+    private final CajaService cajaService;
     private final MovimientoInventarioRepository movimientoInventarioRepository;
-
-    private static final AtomicLong sequenceCounter = new AtomicLong(System.currentTimeMillis() % 1000000);
-    private static final AtomicLong facturaSequenceCounter = new AtomicLong(System.currentTimeMillis() % 1000000);
+    private final NumeracionService numeracionService;
 
     @Override
     @Transactional
@@ -137,7 +135,7 @@ public class PedidoServiceImpl implements PedidoService {
         }
 
         // 3. Crear Factura
-        String numeroFactura = "FAC-" + String.format("%06d", facturaSequenceCounter.incrementAndGet());
+        String numeroFactura = numeracionService.siguiente(TipoSecuencia.FACTURA);
         Factura factura = Factura.builder()
                 .numeroFactura(numeroFactura)
                 .cliente(pedido.getCliente())
@@ -199,25 +197,10 @@ public class PedidoServiceImpl implements PedidoService {
 
         factura = facturaRepository.save(factura);
 
-        // 5. Registrar movimiento de Caja
-        Long ingresosActual = caja.getMontoIngresos() != null ? caja.getMontoIngresos() : 0L;
-        caja.setMontoIngresos(ingresosActual + factura.getTotal());
-        Long inicial = caja.getMontoInicial() != null ? caja.getMontoInicial() : 0L;
-        Long egresos = caja.getMontoEgresos() != null ? caja.getMontoEgresos() : 0L;
-        Long esperado = inicial + caja.getMontoIngresos() - egresos;
-        caja.setMontoEsperado(esperado);
-        cajaRepository.save(caja);
-
-        MovimientoCaja movCaja = MovimientoCaja.builder()
-                .caja(caja)
-                .tipo("INGRESO_VENTA")
-                .monto(factura.getTotal())
-                .concepto("Venta Factura #" + factura.getNumeroFactura() + " (Pedido #" + pedido.getNumeroPedido() + ")")
-                .facturaId(factura.getId())
-                .fecha(LocalDateTime.now())
-                .build();
-
-        movimientoCajaRepository.save(movCaja);
+        // 5. Movimiento de caja según forma de pago (solo el efectivo suma al esperado del arqueo)
+        cajaService.registrarIngresoPorVenta(caja, factura.getFormaPago(), factura.getTotal(),
+                "Venta Factura #" + factura.getNumeroFactura() + " (Pedido #" + pedido.getNumeroPedido() + ")",
+                factura.getId());
 
         // 6. Actualizar estado del pedido a FACTURADO
         pedido.setEstado(EstadoPedido.FACTURADO);
@@ -235,7 +218,7 @@ public class PedidoServiceImpl implements PedidoService {
 
         Pedido pedido = pedidoExistente != null ? pedidoExistente : new Pedido();
         if (pedido.getId() == null) {
-            pedido.setNumeroPedido("PED-" + String.format("%06d", sequenceCounter.incrementAndGet()));
+            pedido.setNumeroPedido(numeracionService.siguiente(TipoSecuencia.PEDIDO));
             pedido.setEstado(EstadoPedido.PENDIENTE);
         }
         pedido.setCliente(cliente);

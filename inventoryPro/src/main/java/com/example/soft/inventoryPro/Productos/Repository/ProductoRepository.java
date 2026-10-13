@@ -13,6 +13,10 @@ import java.util.Optional;
 public interface ProductoRepository extends JpaRepository<Productos, Long> {
     Optional<Productos> findByIdProductos(Long idProductos);
 
+    boolean existsByCodigoIgnoreCase(String codigo);
+
+    boolean existsByCodigoIgnoreCaseAndIdProductosNot(String codigo, Long idProductos);
+
     @Query("SELECT p FROM Productos p WHERE p.cantidad <= p.stockMinimo AND (p.activo = true OR p.activo IS NULL)")
     List<Productos> findProductosBajoStock();
 

@@ -39,9 +39,4 @@ public class ProductoRequestDTO {
     @NotNull(message = "El stock mínimo es obligatorio")
     @Min(value = 0, message = "El stock mínimo no puede ser negativo")
     private Integer stockMinimo;
-
-    @Min(value = 0, message = "El stock inicial no puede ser negativo")
-    private Integer stockInicial;
-
-    private Long costoInicial;
 }

@@ -21,4 +21,7 @@ public class CajaResponseDTO {
     private LocalDateTime fechaCierre;
     private String observacionApertura;
     private String observacionCierre;
+    // Ventas que no entran al cajón: se muestran para cuadrar vouchers, no suman a montoEsperado
+    private Long totalTarjeta;
+    private Long totalTransferencia;
 }

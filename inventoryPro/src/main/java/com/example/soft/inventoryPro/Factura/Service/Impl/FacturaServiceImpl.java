@@ -1,9 +1,8 @@
 package com.example.soft.inventoryPro.Factura.Service.Impl;
 
 import com.example.soft.inventoryPro.Caja.Models.Caja;
-import com.example.soft.inventoryPro.Caja.Models.MovimientoCaja;
 import com.example.soft.inventoryPro.Caja.Repository.CajaRepository;
-import com.example.soft.inventoryPro.Caja.Repository.MovimientoCajaRepository;
+import com.example.soft.inventoryPro.Caja.Service.CajaService;
 import com.example.soft.inventoryPro.Clientes.Models.Cliente;
 import com.example.soft.inventoryPro.Clientes.Repository.ClienteRepository;
 import com.example.soft.inventoryPro.Factura.Models.DetalleFactura;
@@ -15,6 +14,8 @@ import com.example.soft.inventoryPro.Inventario.Models.TipoMovimiento;
 import com.example.soft.inventoryPro.Inventario.Repository.MovimientoInventarioRepository;
 import com.example.soft.inventoryPro.Productos.Models.Productos;
 import com.example.soft.inventoryPro.Productos.Repository.ProductoRepository;
+import com.example.soft.inventoryPro.Secuencia.Models.TipoSecuencia;
+import com.example.soft.inventoryPro.Secuencia.Service.NumeracionService;
 import com.example.soft.inventoryPro.Ultils.Errores.StockInsuficienteException;
 import com.example.soft.inventoryPro.common.exception.BusinessRuleException;
 import com.example.soft.inventoryPro.common.exception.ResourceNotFoundException;
@@ -28,7 +29,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 @Service
@@ -39,10 +39,9 @@ public class FacturaServiceImpl implements FacturaService {
     private final ClienteRepository clienteRepository;
     private final ProductoRepository productoRepository;
     private final CajaRepository cajaRepository;
-    private final MovimientoCajaRepository movimientoCajaRepository;
+    private final CajaService cajaService;
     private final MovimientoInventarioRepository movimientoInventarioRepository;
-
-    private static final AtomicLong sequenceCounter = new AtomicLong(System.currentTimeMillis() % 1000000);
+    private final NumeracionService numeracionService;
 
     @Override
     @Transactional
@@ -68,8 +67,8 @@ public class FacturaServiceImpl implements FacturaService {
             }
         }
 
-        // 4. Generar número de factura único
-        String numeroFactura = "FAC-" + String.format("%06d", sequenceCounter.incrementAndGet());
+        // 4. Generar número de factura único (contador persistente, compartido con facturar-pedido)
+        String numeroFactura = numeracionService.siguiente(TipoSecuencia.FACTURA);
 
         Factura factura = Factura.builder()
                 .numeroFactura(numeroFactura)
@@ -136,25 +135,9 @@ public class FacturaServiceImpl implements FacturaService {
         factura.setTotal(subtotalGeneral);
         Factura guardada = facturaRepository.save(factura);
 
-        // 5. Generar automáticamente movimiento de caja INGRESO_VENTA
-        Long montoIngresosActual = caja.getMontoIngresos() != null ? caja.getMontoIngresos() : 0L;
-        caja.setMontoIngresos(montoIngresosActual + guardada.getTotal());
-        Long inicial = caja.getMontoInicial() != null ? caja.getMontoInicial() : 0L;
-        Long egresos = caja.getMontoEgresos() != null ? caja.getMontoEgresos() : 0L;
-        Long esperado = inicial + caja.getMontoIngresos() - egresos;
-        caja.setMontoEsperado(esperado);
-        cajaRepository.save(caja);
-
-        MovimientoCaja movCaja = MovimientoCaja.builder()
-                .caja(caja)
-                .tipo("INGRESO_VENTA")
-                .monto(guardada.getTotal())
-                .concepto("Venta Factura #" + guardada.getNumeroFactura())
-                .facturaId(guardada.getId())
-                .fecha(LocalDateTime.now())
-                .build();
-
-        movimientoCajaRepository.save(movCaja);
+        // 5. Movimiento de caja según forma de pago (solo el efectivo suma al esperado del arqueo)
+        cajaService.registrarIngresoPorVenta(caja, guardada.getFormaPago(), guardada.getTotal(),
+                "Venta Factura #" + guardada.getNumeroFactura(), guardada.getId());
 
         return toFacturaResponseDTO(guardada);
     }
