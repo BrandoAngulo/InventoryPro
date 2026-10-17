@@ -224,7 +224,6 @@ public class PedidoServiceImpl implements PedidoService {
         pedido.setCliente(cliente);
         pedido.setObservacion(dto.getObservacion());
         pedido.setDescuentoGeneral(descuentoGeneral);
-        pedido.setImpuesto(impuesto);
 
         if (pedido.getDetalles() == null) {
             pedido.setDetalles(new ArrayList<>());
@@ -267,6 +266,12 @@ public class PedidoServiceImpl implements PedidoService {
         if (descuentoGeneral > subtotalGeneral) {
             throw new BusinessRuleException("El descuento general no puede ser superior al subtotal del pedido");
         }
+
+        if (dto.getPorcentajeImpuesto() != null) {
+            long base = subtotalGeneral - descuentoGeneral;
+            impuesto = (base * dto.getPorcentajeImpuesto() + 50) / 100;
+        }
+        pedido.setImpuesto(impuesto);
 
         Long total = subtotalGeneral - descuentoGeneral + impuesto;
         if (total < 0L) {

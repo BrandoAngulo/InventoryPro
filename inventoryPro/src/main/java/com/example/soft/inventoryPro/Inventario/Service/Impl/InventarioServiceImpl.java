@@ -84,7 +84,7 @@ public class InventarioServiceImpl implements InventarioService {
             if (stockActual == 0 || cppActual == 0L) {
                 nuevoCPP = costoIngreso;
             } else {
-                nuevoCPP = ((stockActual * cppActual) + ((long) cantIngresada * costoIngreso)) / (stockActual + cantIngresada);
+                nuevoCPP = dividirRedondeado((stockActual * cppActual) + ((long) cantIngresada * costoIngreso), stockActual + cantIngresada);
             }
 
             int nuevoStock = stockActual + cantIngresada;
@@ -140,7 +140,7 @@ public class InventarioServiceImpl implements InventarioService {
                 if (stockActual == 0 || cppActual == 0L) {
                     nuevoCPP = costoIngreso;
                 } else {
-                    nuevoCPP = ((stockActual * cppActual) + ((long) cantidadAjuste * costoIngreso)) / (stockActual + cantidadAjuste);
+                    nuevoCPP = dividirRedondeado((stockActual * cppActual) + ((long) cantidadAjuste * costoIngreso), stockActual + cantidadAjuste);
                 }
             }
             nuevoStock = stockActual + cantidadAjuste;
@@ -219,6 +219,11 @@ public class InventarioServiceImpl implements InventarioService {
         return ajustes.stream()
                 .map(this::toAjusteDTO)
                 .collect(Collectors.toList());
+    }
+
+    // División entera redondeada al centavo más cercano (mitad hacia arriba); valores positivos
+    private Long dividirRedondeado(long dividendo, long divisor) {
+        return (dividendo + divisor / 2) / divisor;
     }
 
     private AjusteStockResponseDTO toAjusteDTO(AjusteInventario a) {
